@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧农场 - API 测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 4px; }
+        .success { color: green; }
+        .error { color: red; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>智慧农场 API 测试</h1>
+    <div>
+        <button onclick="testHealth()">测试健康检查</button>
+        <button onclick="testDevices()">测试设备列表</button>
+        <button onclick="testEnvironment()">测试环境数据</button>
+    </div>
+    <div id="result" class="result"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+        const resultDiv = document.getElementById('result');
+
+        async function testHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/api/system/health`);
+                const data = await response.json();
+                resultDiv.innerHTML = `<span class="success">✓ 健康检查成功:</span><br><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="✗ 错误:</span> ${error.message}`;
+            }
+        }
+
+        async function testDevices() {
+            try {
+                const response = await fetch(`${API_BASE}/api/devices/list`);
+                const data = await response.json();
+                resultDiv.innerHTML = `<span class="success">✓ 设备列表:</span><br><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="✗ 错误:</span> ${error.message}`;
+            }
+        }
+
+        async function testEnvironment() {
+            try {
+                const response = await fetch(`${API_BASE}/api/environment/latest`);
+                const data = await response.json();
+                resultDiv.innerHTML = `<span class="success">✓ 环境数据:</span><br><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="✗ 错误:</span> ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
