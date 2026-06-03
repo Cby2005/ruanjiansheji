@@ -18,15 +18,15 @@ const DeviceList = {
                     class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                     <!-- 设备头部 -->
                     <div class="p-4 border-b"
-                        :class="getStatusHeaderClass(device.status)">
+                        :class="getStatusHeaderClass(device.state)">
                         <div class="flex justify-between items-center">
                             <div>
                                 <h4 class="font-semibold text-gray-800">{{ device.deviceName }}</h4>
                                 <p class="text-sm text-gray-500">{{ device.deviceCode }}</p>
                             </div>
                             <span class="px-3 py-1 text-sm rounded-full"
-                                :class="getStatusClass(device.status)">
-                                {{ getStatusText(device.status) }}
+                                :class="getStatusClass(device.state)">
+                                {{ getStatusText(device.state) }}
                             </span>
                         </div>
                     </div>
@@ -38,33 +38,36 @@ const DeviceList = {
                             <span class="text-gray-800">{{ device.deviceType }}</span>
                         </div>
                         <div class="flex justify-between text-sm">
-                            <span class="text-gray-500">安装位置</span>
-                            <span class="text-gray-800">{{ device.location }}</span>
+                            <span class="text-gray-500">安装区域</span>
+                            <span class="text-gray-800">{{ device.area || '-' }}</span>
                         </div>
                         <div class="flex justify-between text-sm">
-                            <span class="text-gray-500">运行时长</span>
-                            <span class="text-gray-800">{{ device.runningHours || 0 }} 小时</span>
+                            <span class="text-gray-500">在线状态</span>
+                            <span class="text-gray-800">
+                                <i class="fas fa-circle mr-1" :class="device.online ? 'text-green-500' : 'text-red-500'"></i>
+                                {{ device.online ? '在线' : '离线' }}
+                            </span>
                         </div>
                     </div>
 
                     <!-- 操作按钮 -->
                     <div class="p-4 bg-gray-50 flex flex-wrap gap-2">
                         <button @click="startDevice(device)"
-                            :disabled="device.status !== 'STANDBY'"
+                            :disabled="device.state !== 'STANDBY'"
                             class="px-3 py-1 text-sm rounded transition-colors"
-                            :class="device.status === 'STANDBY' ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'">
+                            :class="device.state === 'STANDBY' ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'">
                             <i class="fas fa-play mr-1"></i>启动
                         </button>
                         <button @click="stopDevice(device)"
-                            :disabled="device.status !== 'RUNNING'"
+                            :disabled="device.state !== 'RUNNING'"
                             class="px-3 py-1 text-sm rounded transition-colors"
-                            :class="device.status === 'RUNNING' ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'">
+                            :class="device.state === 'RUNNING' ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'">
                             <i class="fas fa-stop mr-1"></i>停止
                         </button>
                         <button @click="maintainDevice(device)"
-                            :disabled="device.status !== 'FAULT' && device.status !== 'STANDBY'"
+                            :disabled="device.state !== 'FAULT' && device.state !== 'STANDBY'"
                             class="px-3 py-1 text-sm rounded transition-colors"
-                            :class="(device.status === 'FAULT' || device.status === 'STANDBY') ? 'bg-yellow-500 text-white hover:bg-yellow-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'">
+                            :class="(device.state === 'FAULT' || device.state === 'STANDBY') ? 'bg-yellow-500 text-white hover:bg-yellow-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'">
                             <i class="fas fa-wrench mr-1"></i>维护
                         </button>
                         <button @click="showDetail(device)"
@@ -115,17 +118,20 @@ const DeviceList = {
                             <div class="flex justify-between py-2 border-b">
                                 <span class="text-gray-500">当前状态</span>
                                 <span class="px-2 py-1 text-sm rounded-full"
-                                    :class="getStatusClass(selectedDevice.status)">
-                                    {{ getStatusText(selectedDevice.status) }}
+                                    :class="getStatusClass(selectedDevice.state)">
+                                    {{ getStatusText(selectedDevice.state) }}
                                 </span>
                             </div>
                             <div class="flex justify-between py-2 border-b">
-                                <span class="text-gray-500">安装位置</span>
-                                <span class="font-medium">{{ selectedDevice.location }}</span>
+                                <span class="text-gray-500">安装区域</span>
+                                <span class="font-medium">{{ selectedDevice.area || '-' }}</span>
                             </div>
                             <div class="flex justify-between py-2">
-                                <span class="text-gray-500">运行时长</span>
-                                <span class="font-medium">{{ selectedDevice.runningHours || 0 }} 小时</span>
+                                <span class="text-gray-500">在线状态</span>
+                                <span class="font-medium">
+                                    <i class="fas fa-circle mr-1" :class="selectedDevice.online ? 'text-green-500' : 'text-red-500'"></i>
+                                    {{ selectedDevice.online ? '在线' : '离线' }}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -155,7 +161,7 @@ const DeviceList = {
             setTimeout(() => message.value = null, 3000);
         };
 
-        const getStatusClass = (status) => {
+        const getStatusClass = (state) => {
             const map = {
                 'RUNNING': 'bg-green-100 text-green-800',
                 'STANDBY': 'bg-gray-100 text-gray-800',
@@ -163,10 +169,10 @@ const DeviceList = {
                 'MAINTENANCE': 'bg-yellow-100 text-yellow-800',
                 'CALIBRATION': 'bg-blue-100 text-blue-800'
             };
-            return map[status] || 'bg-gray-100 text-gray-800';
+            return map[state] || 'bg-gray-100 text-gray-800';
         };
 
-        const getStatusHeaderClass = (status) => {
+        const getStatusHeaderClass = (state) => {
             const map = {
                 'RUNNING': 'bg-green-50',
                 'STANDBY': 'bg-gray-50',
@@ -174,10 +180,10 @@ const DeviceList = {
                 'MAINTENANCE': 'bg-yellow-50',
                 'CALIBRATION': 'bg-blue-50'
             };
-            return map[status] || 'bg-gray-50';
+            return map[state] || 'bg-gray-50';
         };
 
-        const getStatusText = (status) => {
+        const getStatusText = (state) => {
             const map = {
                 'RUNNING': '运行中',
                 'STANDBY': '待机',
@@ -185,7 +191,7 @@ const DeviceList = {
                 'MAINTENANCE': '维护中',
                 'CALIBRATION': '校准中'
             };
-            return map[status] || status;
+            return map[state] || state;
         };
 
         const loadDevices = async () => {

@@ -43,11 +43,33 @@ const AppLayout = {
                         <button @click="refreshData" class="text-gray-500 hover:text-green-600 transition-colors">
                             <i class="fas fa-sync-alt"></i>
                         </button>
-                        <div class="flex items-center space-x-2">
-                            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white">
-                                <i class="fas fa-user"></i>
+                        <!-- 用户信息和退出 -->
+                        <div class="relative" v-if="user">
+                            <button @click="showUserMenu = !showUserMenu"
+                                class="flex items-center space-x-2 hover:bg-gray-100 rounded-lg px-3 py-2 transition-colors">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm"
+                                    :class="getRoleBgColor(user.role)">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="text-left">
+                                    <p class="text-sm font-medium text-gray-700">{{ user.username }}</p>
+                                    <p class="text-xs text-gray-400">{{ getRoleName(user.role) }}</p>
+                                </div>
+                                <i class="fas fa-chevron-down text-xs text-gray-400"></i>
+                            </button>
+
+                            <!-- 下拉菜单 -->
+                            <div v-if="showUserMenu"
+                                class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border z-50">
+                                <div class="p-3 border-b">
+                                    <p class="text-sm font-medium text-gray-700">{{ user.username }}</p>
+                                    <p class="text-xs text-gray-400">角色：{{ getRoleName(user.role) }}</p>
+                                </div>
+                                <button @click="logout"
+                                    class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                                    <i class="fas fa-sign-out-alt mr-2"></i>退出登录
+                                </button>
                             </div>
-                            <span class="text-sm text-gray-600">管理员</span>
                         </div>
                     </div>
                 </header>
@@ -66,6 +88,15 @@ const AppLayout = {
 
     setup() {
         const route = VueRouter.useRoute();
+        const showUserMenu = Vue.ref(false);
+
+        const user = Vue.computed(() => {
+            try {
+                return JSON.parse(localStorage.getItem('user') || 'null');
+            } catch {
+                return null;
+            }
+        });
 
         const menuItems = [
             { path: '/', name: '系统总览', icon: 'fas fa-tachometer-alt' },
@@ -88,11 +119,52 @@ const AppLayout = {
             window.location.reload();
         };
 
+        const logout = () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '#/login';
+            window.location.reload();
+        };
+
+        const getRoleName = (role) => {
+            const roleNames = {
+                'ADMIN': '管理员',
+                'TECHNICIAN': '技术员',
+                'OPERATOR': '操作员',
+                'VIEWER': '观察者'
+            };
+            return roleNames[role] || role;
+        };
+
+        const getRoleBgColor = (role) => {
+            const colors = {
+                'ADMIN': 'bg-red-500',
+                'TECHNICIAN': 'bg-blue-500',
+                'OPERATOR': 'bg-yellow-500',
+                'VIEWER': 'bg-gray-500'
+            };
+            return colors[role] || 'bg-gray-500';
+        };
+
+        // 点击外部关闭菜单
+        Vue.onMounted(() => {
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.relative')) {
+                    showUserMenu.value = false;
+                }
+            });
+        });
+
         return {
             menuItems,
             isActive,
             currentPageTitle,
-            refreshData
+            refreshData,
+            user,
+            showUserMenu,
+            logout,
+            getRoleName,
+            getRoleBgColor
         };
     }
 };

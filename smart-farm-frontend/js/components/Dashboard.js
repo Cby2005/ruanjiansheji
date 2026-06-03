@@ -89,8 +89,8 @@ const Dashboard = {
                                 <p class="text-xs text-gray-400">{{ device.deviceCode }}</p>
                             </div>
                             <span class="px-2 py-1 text-xs rounded-full"
-                                :class="getStatusClass(device.status)">
-                                {{ getStatusText(device.status) }}
+                                :class="getStatusClass(device.state)">
+                                {{ getStatusText(device.state) }}
                             </span>
                         </div>
                     </div>
