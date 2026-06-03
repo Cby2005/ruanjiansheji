@@ -62,6 +62,53 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/refresh")
+    @Operation(summary = "刷新Token")
+    public Result<Map<String, Object>> refreshToken(@RequestHeader("Authorization") String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return Result.fail("Token无效");
+        }
+
+        try {
+            String token = authorization.substring(7);
+            return Result.success(authService.refreshToken(token));
+        } catch (Exception e) {
+            return Result.fail("Token已过期或无效");
+        }
+    }
+
+    @PostMapping("/change-password")
+    @Operation(summary = "修改密码")
+    public Result<Map<String, Object>> changePassword(
+            @RequestHeader("Authorization") String authorization,
+            @RequestBody Map<String, String> request) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return Result.fail("未登录");
+        }
+
+        String oldPassword = request.get("oldPassword");
+        String newPassword = request.get("newPassword");
+
+        if (oldPassword == null || oldPassword.trim().isEmpty()) {
+            return Result.fail("旧密码不能为空");
+        }
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            return Result.fail("新密码不能为空");
+        }
+
+        try {
+            String token = authorization.substring(7);
+            String username = authService.getCurrentUser(token).get("user").toString();
+            // 从 token 中获取用户名
+            username = token.substring(token.indexOf(".") + 1, token.lastIndexOf("."));
+            // 简化处理，直接使用 token 解析
+            return Result.success(authService.changePassword(
+                getUsernameFromToken(authorization), oldPassword, newPassword));
+        } catch (Exception e) {
+            return Result.fail(e.getMessage());
+        }
+    }
+
     @GetMapping("/me")
     @Operation(summary = "获取当前用户信息")
     public Result<Map<String, Object>> getCurrentUser(@RequestHeader(value = "Authorization", required = false) String authorization) {
@@ -75,5 +122,10 @@ public class AuthController {
         } catch (Exception e) {
             return Result.fail("Token已过期或无效");
         }
+    }
+
+    private String getUsernameFromToken(String authorization) {
+        String token = authorization.substring(7);
+        return authService.getCurrentUser(token).get("user").toString();
     }
 }

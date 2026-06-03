@@ -24,6 +24,13 @@ springdoc:
   api-docs:
     path: /v3/api-docs
 
+# 小米 MiMo AI API 配置
+mimo:
+  api:
+    key: ${MIMO_API_KEY:}
+    base-url: ${MIMO_BASE_URL:https://api.xiaomimimo.com/v1}
+  model: ${MIMO_MODEL:mimo-v2.5-pro}
+
 logging:
   level:
     com.cby.smartfarm: DEBUG

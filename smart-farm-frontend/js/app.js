@@ -50,7 +50,9 @@ const routes = [
     { path: '/', component: Dashboard, meta: { requiresAuth: true } },
     { path: '/devices', component: DeviceList, meta: { requiresAuth: true } },
     { path: '/environment', component: EnvironmentData, meta: { requiresAuth: true } },
-    { path: '/statistics', component: Statistics, meta: { requiresAuth: true } }
+    { path: '/statistics', component: Statistics, meta: { requiresAuth: true } },
+    { path: '/users', component: UserManagement, meta: { requiresAuth: true, requiredRole: 'ADMIN' } },
+    { path: '/ai-assistant', component: AIAssistant, meta: { requiresAuth: true } }
 ];
 
 const router = VueRouter.createRouter({
@@ -64,6 +66,8 @@ router.beforeEach((to, from, next) => {
         next('/login');
     } else if (to.path === '/login' && authStore.isLoggedIn) {
         next('/');
+    } else if (to.meta.requiredRole && !authStore.hasPermission(to.meta.requiredRole)) {
+        next('/'); // 权限不足，跳转首页
     } else {
         next();
     }
@@ -81,6 +85,8 @@ app.component('dashboard', Dashboard);
 app.component('device-list', DeviceList);
 app.component('environment-data', EnvironmentData);
 app.component('statistics', Statistics);
+app.component('user-management', UserManagement);
+app.component('ai-assistant', AIAssistant);
 
 // 全局提供认证状态
 app.provide('authStore', authStore);

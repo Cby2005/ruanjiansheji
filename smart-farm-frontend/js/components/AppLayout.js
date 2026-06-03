@@ -25,16 +25,17 @@ const AppLayout = {
                     </div>
 
                     <nav class="mt-6">
-                        <router-link
-                            v-for="item in menuItems"
-                            :key="item.path"
-                            :to="item.path"
-                            class="flex items-center px-6 py-3 text-green-100 hover:bg-green-700 transition-colors"
-                            :class="{ 'bg-green-700 border-l-4 border-green-300': isActive(item.path) }"
-                        >
-                            <i :class="item.icon" class="mr-3 w-5"></i>
-                            <span>{{ item.name }}</span>
-                        </router-link>
+                        <template v-for="item in menuItems" :key="item.path">
+                            <router-link
+                                v-if="!item.requiredRole || hasPermission(item.requiredRole)"
+                                :to="item.path"
+                                class="flex items-center px-6 py-3 text-green-100 hover:bg-green-700 transition-colors"
+                                :class="{ 'bg-green-700 border-l-4 border-green-300': isActive(item.path) }"
+                            >
+                                <i :class="item.icon" class="mr-3 w-5"></i>
+                                <span>{{ item.name }}</span>
+                            </router-link>
+                        </template>
                     </nav>
 
                     <div class="absolute bottom-0 w-64 p-4 bg-green-900">
@@ -121,7 +122,9 @@ const AppLayout = {
             { path: '/', name: '系统总览', icon: 'fas fa-tachometer-alt' },
             { path: '/devices', name: '设备管理', icon: 'fas fa-cogs' },
             { path: '/environment', name: '环境监测', icon: 'fas fa-leaf' },
-            { path: '/statistics', name: '数据统计', icon: 'fas fa-chart-bar' }
+            { path: '/statistics', name: '数据统计', icon: 'fas fa-chart-bar' },
+            { path: '/ai-assistant', name: 'AI 助手', icon: 'fas fa-robot' },
+            { path: '/users', name: '用户管理', icon: 'fas fa-users', requiredRole: 'ADMIN' }
         ];
 
         const isActive = (path) => {
@@ -165,6 +168,17 @@ const AppLayout = {
             return colors[role] || 'bg-gray-500';
         };
 
+        const hasPermission = (requiredRole) => {
+            const roleHierarchy = {
+                'ADMIN': 4,
+                'TECHNICIAN': 3,
+                'OPERATOR': 2,
+                'VIEWER': 1
+            };
+            const userRole = user.value?.role || 'VIEWER';
+            return (roleHierarchy[userRole] || 0) >= (roleHierarchy[requiredRole] || 0);
+        };
+
         // 点击外部关闭菜单
         Vue.onMounted(() => {
             document.addEventListener('click', (e) => {
@@ -184,7 +198,8 @@ const AppLayout = {
             showUserMenu,
             logout,
             getRoleName,
-            getRoleBgColor
+            getRoleBgColor,
+            hasPermission
         };
     }
 };

@@ -5,6 +5,7 @@ import com.cby.smartfarm.repository.UserRepository;
 import com.cby.smartfarm.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * 用户注册
@@ -33,6 +35,11 @@ public class AuthService {
             throw new IllegalArgumentException("用户名已存在: " + username);
         }
 
+        // 验证密码强度
+        if (password == null || password.length() < 6) {
+            throw new IllegalArgumentException("密码长度不能少于6位");
+        }
+
         // 验证角色
         if (role == null || role.isEmpty()) {
             role = "VIEWER"; // 默认角色
@@ -41,10 +48,10 @@ public class AuthService {
             throw new IllegalArgumentException("无效的角色: " + role);
         }
 
-        // 创建用户
+        // 创建用户（密码加密存储）
         User user = new User();
         user.setUsername(username);
-        user.setPassword(password); // 注意：实际项目中应该加密存储
+        user.setPassword(passwordEncoder.encode(password));
         user.setRole(role.toUpperCase());
         userRepository.save(user);
 
@@ -67,8 +74,8 @@ public class AuthService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("用户不存在: " + username));
 
-        // 验证密码
-        if (!user.getPassword().equals(password)) {
+        // 验证密码（使用 BCrypt）
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new IllegalArgumentException("密码错误");
         }
 
@@ -80,6 +87,54 @@ public class AuthService {
         result.put("token", token);
         result.put("user", createUserMap(user));
         log.info("用户登录成功: {}", username);
+        return result;
+    }
+
+    /**
+     * 刷新 Token
+     */
+    public Map<String, Object> refreshToken(String oldToken) {
+        try {
+            String username = jwtUtil.getUsernameFromToken(oldToken);
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+
+            String newToken = jwtUtil.generateToken(username, user.getRole());
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("token", newToken);
+            result.put("user", createUserMap(user));
+            return result;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Token 无效或已过期");
+        }
+    }
+
+    /**
+     * 修改密码
+     */
+    @Transactional
+    public Map<String, Object> changePassword(String username, String oldPassword, String newPassword) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("用户不存在: " + username));
+
+        // 验证旧密码
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new IllegalArgumentException("旧密码错误");
+        }
+
+        // 验证新密码强度
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new IllegalArgumentException("新密码长度不能少于6位");
+        }
+
+        // 更新密码
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("message", "密码修改成功");
+        log.info("用户修改密码成功: {}", username);
         return result;
     }
 
