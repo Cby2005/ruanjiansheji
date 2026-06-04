@@ -36,34 +36,64 @@ const UserProfile = {
                 </div>
             </div>
 
-            <!-- 修改密码 -->
+            <!-- 修改密码按钮 -->
             <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                    <i class="fas fa-lock mr-2 text-yellow-500"></i>修改密码
-                </h3>
-                <div class="space-y-4">
+                <div class="flex items-center justify-between">
                     <div>
-                        <label class="block text-sm text-gray-600 mb-1">当前密码</label>
-                        <input v-model="passwordForm.oldPassword" type="password"
-                            class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                            placeholder="请输入当前密码" />
+                        <h3 class="text-lg font-semibold text-gray-800">
+                            <i class="fas fa-lock mr-2 text-yellow-500"></i>账户安全
+                        </h3>
+                        <p class="text-sm text-gray-500 mt-1">定期修改密码可以提高账户安全性</p>
                     </div>
-                    <div>
-                        <label class="block text-sm text-gray-600 mb-1">新密码</label>
-                        <input v-model="passwordForm.newPassword" type="password"
-                            class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                            placeholder="请输入新密码" />
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-600 mb-1">确认新密码</label>
-                        <input v-model="passwordForm.confirmPassword" type="password"
-                            class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                            placeholder="再次输入新密码" />
-                    </div>
-                    <button @click="changePassword"
-                        class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
-                        <i class="fas fa-save mr-2"></i>保存修改
+                    <button @click="showPasswordModal = true"
+                        class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors">
+                        <i class="fas fa-key mr-2"></i>修改密码
                     </button>
+                </div>
+            </div>
+
+            <!-- 修改密码弹窗 -->
+            <div v-if="showPasswordModal" class="fixed inset-0 flex items-center justify-center z-50">
+                <div class="absolute inset-0 bg-black bg-opacity-50" @click="showPasswordModal = false"></div>
+                <div class="relative bg-white rounded-lg shadow-xl w-96 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">
+                            <i class="fas fa-lock mr-2 text-yellow-500"></i>修改密码
+                        </h3>
+                        <button @click="showPasswordModal = false" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">当前密码</label>
+                            <input v-model="passwordForm.oldPassword" type="password"
+                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                placeholder="请输入当前密码" />
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">新密码</label>
+                            <input v-model="passwordForm.newPassword" type="password"
+                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                placeholder="请输入新密码" />
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">确认新密码</label>
+                            <input v-model="passwordForm.confirmPassword" type="password"
+                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                placeholder="再次输入新密码" />
+                        </div>
+                        <div class="flex justify-end space-x-3 mt-6">
+                            <button @click="showPasswordModal = false"
+                                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                                取消
+                            </button>
+                            <button @click="changePassword"
+                                class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                                <i class="fas fa-save mr-2"></i>确认修改
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -112,6 +142,7 @@ const UserProfile = {
 
         const avatarUrl = Vue.ref(localStorage.getItem('avatar_' + user.value.username) || '');
         const message = Vue.ref(null);
+        const showPasswordModal = Vue.ref(false);
 
         const passwordForm = Vue.reactive({
             oldPassword: '',
@@ -199,6 +230,7 @@ const UserProfile = {
             user,
             avatarUrl,
             message,
+            showPasswordModal,
             passwordForm,
             getRoleName,
             getRoleBgColor,
