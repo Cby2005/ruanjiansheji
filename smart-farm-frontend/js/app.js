@@ -53,7 +53,9 @@ const routes = [
     { path: '/statistics', component: Statistics, meta: { requiresAuth: true } },
     { path: '/users', component: UserManagement, meta: { requiresAuth: true, requiredRole: 'ADMIN' } },
     { path: '/ai-assistant', component: AIAssistant, meta: { requiresAuth: true } },
-    { path: '/profile', component: UserProfile, meta: { requiresAuth: true } }
+    { path: '/profile', component: UserProfile, meta: { requiresAuth: true } },
+    { path: '/tasks', component: TaskManagement, meta: { requiresAuth: true } },
+    { path: '/alerts', component: AlertCenter, meta: { requiresAuth: true } }
 ];
 
 const router = VueRouter.createRouter({
@@ -79,6 +81,14 @@ const app = Vue.createApp({
     template: '<app-layout></app-layout>'
 });
 
+// 使用 Element Plus
+app.use(ElementPlus);
+
+// 注册 Element Plus 图标
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+    app.component(key, component);
+}
+
 // 注册组件
 app.component('app-layout', AppLayout);
 app.component('login', Login);
@@ -89,6 +99,8 @@ app.component('statistics', Statistics);
 app.component('user-management', UserManagement);
 app.component('ai-assistant', AIAssistant);
 app.component('user-profile', UserProfile);
+app.component('task-management', TaskManagement);
+app.component('alert-center', AlertCenter);
 
 // 全局提供认证状态
 app.provide('authStore', authStore);

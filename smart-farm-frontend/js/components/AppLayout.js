@@ -1,120 +1,133 @@
 const AppLayout = {
     template: `
-        <div class="min-h-screen flex">
-            <!-- 登录页面：不显示侧边栏 -->
+        <div>
+            <!-- 登录页面不显示布局 -->
             <template v-if="isLoginPage">
-                <div class="flex-1">
-                    <router-view v-slot="{ Component }">
-                        <transition name="fade" mode="out-in">
-                            <component :is="Component" />
-                        </transition>
-                    </router-view>
-                </div>
+                <router-view></router-view>
             </template>
 
-            <!-- 其他页面：显示完整布局 -->
+            <!-- 后台管理布局 -->
             <template v-else>
-                <!-- 侧边栏 -->
-                <aside class="w-64 bg-gradient-to-b from-green-800 to-green-900 text-white shadow-lg">
-                    <div class="p-6">
-                        <h1 class="text-2xl font-bold flex items-center">
-                            <i class="fas fa-seedling mr-3 text-green-300"></i>
-                            智慧农场
-                        </h1>
-                        <p class="text-green-300 text-sm mt-1">综合管理平台</p>
-                    </div>
-
-                    <nav class="mt-6">
-                        <template v-for="item in menuItems" :key="item.path">
-                            <router-link
-                                v-if="!item.requiredRole || hasPermission(item.requiredRole)"
-                                :to="item.path"
-                                class="flex items-center px-6 py-3 text-green-100 hover:bg-green-700 transition-colors"
-                                :class="{ 'bg-green-700 border-l-4 border-green-300': isActive(item.path) }"
-                            >
-                                <i :class="item.icon" class="mr-3 w-5"></i>
-                                <span>{{ item.name }}</span>
-                            </router-link>
-                        </template>
-                    </nav>
-
-                    <div class="absolute bottom-0 w-64 p-4 bg-green-900">
-                        <div class="flex items-center text-sm text-green-300">
-                            <i class="fas fa-circle text-green-400 mr-2"></i>
-                            <span>系统运行中</span>
+                <el-container style="height: 100vh;">
+                    <!-- 左侧菜单 -->
+                    <el-aside :width="isCollapse ? '64px' : '220px'" style="transition: width 0.3s; background-color: #304156;">
+                        <div style="height: 60px; display: flex; align-items: center; justify-content: center; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <i class="fas fa-seedling" style="font-size: 20px; color: #67c23a;"></i>
+                            <span v-if="!isCollapse" style="margin-left: 10px; font-size: 16px; font-weight: bold; white-space: nowrap;">智慧农场</span>
                         </div>
-                    </div>
-                </aside>
+                        <el-scrollbar>
+                            <el-menu
+                                :default-active="activeMenu"
+                                :collapse="isCollapse"
+                                background-color="#304156"
+                                text-color="#bfcbd9"
+                                active-text-color="#409eff"
+                                router
+                                :collapse-transition="false">
+                                <el-menu-item index="/">
+                                    <i class="fas fa-tachometer-alt" style="margin-right: 10px; width: 20px; text-align: center;"></i>
+                                    <template #title>首页大屏</template>
+                                </el-menu-item>
+                                <el-menu-item index="/environment">
+                                    <i class="fas fa-leaf" style="margin-right: 10px; width: 20px; text-align: center;"></i>
+                                    <template #title>环境监测</template>
+                                </el-menu-item>
+                                <el-menu-item index="/ai-assistant">
+                                    <i class="fas fa-robot" style="margin-right: 10px; width: 20px; text-align: center;"></i>
+                                    <template #title>Agent决策中心</template>
+                                </el-menu-item>
+                                <el-menu-item index="/devices">
+                                    <i class="fas fa-cogs" style="margin-right: 10px; width: 20px; text-align: center;"></i>
+                                    <template #title>智能设备控制</template>
+                                </el-menu-item>
+                                <el-menu-item index="/tasks">
+                                    <i class="fas fa-tasks" style="margin-right: 10px; width: 20px; text-align: center;"></i>
+                                    <template #title>农事任务管理</template>
+                                </el-menu-item>
+                                <el-menu-item index="/alerts">
+                                    <i class="fas fa-exclamation-triangle" style="margin-right: 10px; width: 20px; text-align: center;"></i>
+                                    <template #title>预警中心</template>
+                                </el-menu-item>
+                                <el-menu-item index="/statistics">
+                                    <i class="fas fa-chart-bar" style="margin-right: 10px; width: 20px; text-align: center;"></i>
+                                    <template #title>统计分析</template>
+                                </el-menu-item>
+                                <el-sub-menu index="system" v-if="hasPermission('ADMIN')">
+                                    <template #title>
+                                        <i class="fas fa-cog" style="margin-right: 10px; width: 20px; text-align: center;"></i>
+                                        <span>系统管理</span>
+                                    </template>
+                                    <el-menu-item index="/users">
+                                        <i class="fas fa-users" style="margin-right: 10px; width: 20px; text-align: center;"></i>
+                                        用户管理
+                                    </el-menu-item>
+                                </el-sub-menu>
+                            </el-menu>
+                        </el-scrollbar>
+                    </el-aside>
 
-                <!-- 主内容区 -->
-                <main class="flex-1 flex flex-col">
-                    <!-- 顶部导航 -->
-                    <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
-                        <div class="flex items-center">
-                            <h2 class="text-xl font-semibold text-gray-800">{{ currentPageTitle }}</h2>
-                        </div>
-                        <div class="flex items-center space-x-4">
-                            <button @click="refreshData" class="text-gray-500 hover:text-green-600 transition-colors">
-                                <i class="fas fa-sync-alt"></i>
-                            </button>
-                            <!-- 用户信息和退出 -->
-                            <div class="relative" v-if="user">
-                                <button @click="showUserMenu = !showUserMenu"
-                                    class="flex items-center space-x-2 hover:bg-gray-100 rounded-lg px-3 py-2 transition-colors">
-                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm overflow-hidden"
-                                        :class="getRoleBgColor(user.role)">
-                                        <img v-if="userAvatar" :src="userAvatar" class="w-full h-full object-cover" />
-                                        <i v-else class="fas fa-user"></i>
-                                    </div>
-                                    <div class="text-left">
-                                        <p class="text-sm font-medium text-gray-700">{{ user.username }}</p>
-                                        <p class="text-xs text-gray-400">{{ getRoleName(user.role) }}</p>
-                                    </div>
-                                    <i class="fas fa-chevron-down text-xs text-gray-400"></i>
-                                </button>
-
-                                <!-- 下拉菜单 -->
-                                <div v-if="showUserMenu"
-                                    class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border z-50">
-                                    <div class="p-3 border-b">
-                                        <p class="text-sm font-medium text-gray-700">{{ user.username }}</p>
-                                        <p class="text-xs text-gray-400">角色：{{ getRoleName(user.role) }}</p>
-                                    </div>
-                                    <router-link to="/profile"
-                                        class="block px-4 py-3 text-sm text-gray-700 hover:bg-green-50 transition-colors"
-                                        @click="showUserMenu = false">
-                                        <i class="fas fa-user-circle mr-2"></i>个人中心
-                                    </router-link>
-                                    <button @click="logout"
-                                        class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                                        <i class="fas fa-sign-out-alt mr-2"></i>退出登录
-                                    </button>
-                                </div>
+                    <!-- 右侧区域 -->
+                    <el-container>
+                        <!-- 顶部栏 -->
+                        <el-header style="height: 60px; background: #fff; box-shadow: 0 1px 4px rgba(0,21,41,0.08); display: flex; align-items: center; justify-content: space-between; padding: 0 20px;">
+                            <div style="display: flex; align-items: center;">
+                                <el-icon style="cursor: pointer; font-size: 20px;" @click="isCollapse = !isCollapse">
+                                    <i :class="isCollapse ? 'fas fa-indent' : 'fas fa-outdent'" style="color: #606266;"></i>
+                                </el-icon>
+                                <el-breadcrumb separator="/" style="margin-left: 20px;">
+                                    <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+                                    <el-breadcrumb-item v-if="currentPageTitle !== '首页大屏'">{{ currentPageTitle }}</el-breadcrumb-item>
+                                </el-breadcrumb>
                             </div>
-                        </div>
-                    </header>
+                            <div style="display: flex; align-items: center;">
+                                <el-tooltip content="刷新" placement="bottom">
+                                    <el-button :icon="Refresh" circle size="small" @click="refreshData" style="margin-right: 15px;"></el-button>
+                                </el-tooltip>
+                                <el-dropdown @command="handleCommand" trigger="click">
+                                    <div style="display: flex; align-items: center; cursor: pointer;">
+                                        <el-avatar :size="32" :style="{ backgroundColor: getRoleColor(user?.role) }">
+                                            <img v-if="userAvatar" :src="userAvatar" style="width: 100%; height: 100%; object-fit: cover;" />
+                                            <i v-else class="fas fa-user"></i>
+                                        </el-avatar>
+                                        <span style="margin-left: 8px; font-size: 14px; color: #606266;">{{ user?.username }}</span>
+                                        <el-icon style="margin-left: 4px;"><i class="fas fa-chevron-down" style="font-size: 10px; color: #909399;"></i></el-icon>
+                                    </div>
+                                    <template #dropdown>
+                                        <el-dropdown-menu>
+                                            <el-dropdown-item command="profile">
+                                                <i class="fas fa-user-circle" style="margin-right: 8px;"></i>个人中心
+                                            </el-dropdown-item>
+                                            <el-dropdown-item command="logout" divided>
+                                                <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i>退出登录
+                                            </el-dropdown-item>
+                                        </el-dropdown-menu>
+                                    </template>
+                                </el-dropdown>
+                            </div>
+                        </el-header>
 
-                    <!-- 页面内容 -->
-                    <div class="flex-1 p-6 overflow-auto">
-                        <router-view v-slot="{ Component }">
-                            <transition name="fade" mode="out-in">
-                                <component :is="Component" />
-                            </transition>
-                        </router-view>
-                    </div>
-                </main>
+                        <!-- 内容区 -->
+                        <el-main style="background: #f0f2f5; padding: 20px; overflow: auto;">
+                            <router-view v-slot="{ Component }">
+                                <transition name="fade" mode="out-in">
+                                    <component :is="Component" />
+                                </transition>
+                            </router-view>
+                        </el-main>
+                    </el-container>
+                </el-container>
             </template>
         </div>
     `,
 
     setup() {
         const route = VueRouter.useRoute();
-        const showUserMenu = Vue.ref(false);
+        const router = VueRouter.useRouter();
+        const isCollapse = Vue.ref(false);
 
-        // 判断是否是登录页面
-        const isLoginPage = Vue.computed(() => {
-            return route.path === '/login';
-        });
+        const Refresh = ElementPlusIconsVue.Refresh;
+
+        const isLoginPage = Vue.computed(() => route.path === '/login');
 
         const user = Vue.computed(() => {
             try {
@@ -130,88 +143,63 @@ const AppLayout = {
         });
 
         const menuItems = [
-            { path: '/', name: '系统总览', icon: 'fas fa-tachometer-alt' },
-            { path: '/devices', name: '设备管理', icon: 'fas fa-cogs' },
-            { path: '/environment', name: '环境监测', icon: 'fas fa-leaf' },
-            { path: '/statistics', name: '数据统计', icon: 'fas fa-chart-bar' },
-            { path: '/ai-assistant', name: 'AI 助手', icon: 'fas fa-robot' },
-            { path: '/users', name: '用户管理', icon: 'fas fa-users', requiredRole: 'ADMIN' }
+            { path: '/', name: '首页大屏' },
+            { path: '/environment', name: '环境监测' },
+            { path: '/ai-assistant', name: 'Agent决策中心' },
+            { path: '/devices', name: '智能设备控制' },
+            { path: '/tasks', name: '农事任务管理' },
+            { path: '/alerts', name: '预警中心' },
+            { path: '/statistics', name: '统计分析' },
+            { path: '/users', name: '用户管理' }
         ];
 
-        const isActive = (path) => {
-            if (path === '/') return route.path === '/';
-            return route.path.startsWith(path);
-        };
+        const activeMenu = Vue.computed(() => {
+            return route.path;
+        });
 
         const currentPageTitle = Vue.computed(() => {
-            const item = menuItems.find(m => isActive(m.path));
-            return item ? item.name : '智慧农场';
+            const item = menuItems.find(m => m.path === route.path);
+            return item ? item.name : '首页大屏';
         });
+
+        const getRoleColor = (role) => {
+            const map = { 'ADMIN': '#f56c6c', 'TECHNICIAN': '#409eff', 'OPERATOR': '#e6a23c', 'VIEWER': '#909399' };
+            return map[role] || '#909399';
+        };
+
+        const hasPermission = (requiredRole) => {
+            const roleHierarchy = { 'ADMIN': 4, 'TECHNICIAN': 3, 'OPERATOR': 2, 'VIEWER': 1 };
+            const userRole = user.value?.role || 'VIEWER';
+            return (roleHierarchy[userRole] || 0) >= (roleHierarchy[requiredRole] || 0);
+        };
 
         const refreshData = () => {
             window.location.reload();
         };
 
-        const logout = () => {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '#/login';
-            window.location.reload();
+        const handleCommand = (command) => {
+            if (command === 'profile') {
+                router.push('/profile');
+            } else if (command === 'logout') {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '#/login';
+                window.location.reload();
+            }
         };
-
-        const getRoleName = (role) => {
-            const roleNames = {
-                'ADMIN': '管理员',
-                'TECHNICIAN': '技术员',
-                'OPERATOR': '操作员',
-                'VIEWER': '观察者'
-            };
-            return roleNames[role] || role;
-        };
-
-        const getRoleBgColor = (role) => {
-            const colors = {
-                'ADMIN': 'bg-red-500',
-                'TECHNICIAN': 'bg-blue-500',
-                'OPERATOR': 'bg-yellow-500',
-                'VIEWER': 'bg-gray-500'
-            };
-            return colors[role] || 'bg-gray-500';
-        };
-
-        const hasPermission = (requiredRole) => {
-            const roleHierarchy = {
-                'ADMIN': 4,
-                'TECHNICIAN': 3,
-                'OPERATOR': 2,
-                'VIEWER': 1
-            };
-            const userRole = user.value?.role || 'VIEWER';
-            return (roleHierarchy[userRole] || 0) >= (roleHierarchy[requiredRole] || 0);
-        };
-
-        // 点击外部关闭菜单
-        Vue.onMounted(() => {
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.relative')) {
-                    showUserMenu.value = false;
-                }
-            });
-        });
 
         return {
+            isCollapse,
             isLoginPage,
-            menuItems,
-            isActive,
-            currentPageTitle,
-            refreshData,
             user,
             userAvatar,
-            showUserMenu,
-            logout,
-            getRoleName,
-            getRoleBgColor,
-            hasPermission
+            activeMenu,
+            currentPageTitle,
+            getRoleColor,
+            hasPermission,
+            refreshData,
+            handleCommand,
+            Refresh
         };
     }
 };

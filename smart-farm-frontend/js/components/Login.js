@@ -1,155 +1,107 @@
 const Login = {
     template: `
-        <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-400 to-blue-500">
-            <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+        <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #67c23a 0%, #409eff 100%);">
+            <el-card style="width: 420px; border-radius: 16px;" shadow="always">
                 <!-- Logo -->
-                <div class="text-center mb-8">
-                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-seedling text-4xl text-green-500"></i>
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="width: 80px; height: 80px; background: #f0f9eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                        <i class="fas fa-seedling" style="font-size: 36px; color: #67c23a;"></i>
                     </div>
-                    <h1 class="text-2xl font-bold text-gray-800">智慧农场综合管理平台</h1>
-                    <p class="text-gray-500 mt-2">{{ isLogin ? '登录您的账户' : '创建新账户' }}</p>
+                    <h2 style="margin: 0; color: #303133;">智慧农场综合管理平台</h2>
+                    <p style="color: #909399; margin-top: 8px; font-size: 14px;">{{ isLogin ? '登录您的账户' : '创建新账户' }}</p>
                 </div>
 
                 <!-- 登录/注册切换 -->
-                <div class="flex mb-6 bg-gray-100 rounded-lg p-1">
-                    <button @click="isLogin = true"
-                        class="flex-1 py-2 rounded-md transition-all"
-                        :class="isLogin ? 'bg-white shadow-md text-green-600 font-semibold' : 'text-gray-500'">
-                        登录
-                    </button>
-                    <button @click="isLogin = false"
-                        class="flex-1 py-2 rounded-md transition-all"
-                        :class="!isLogin ? 'bg-white shadow-md text-green-600 font-semibold' : 'text-gray-500'">
-                        注册
-                    </button>
-                </div>
+                <el-tabs v-model="activeTab" @tab-click="onTabChange" style="margin-bottom: 10px;">
+                    <el-tab-pane label="登录" name="login"></el-tab-pane>
+                    <el-tab-pane label="注册" name="register"></el-tab-pane>
+                </el-tabs>
 
                 <!-- 登录表单 -->
-                <form v-if="isLogin" @submit.prevent="handleLogin" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
-                        <div class="relative">
-                            <span class="absolute left-3 top-3 text-gray-400">
-                                <i class="fas fa-user"></i>
-                            </span>
-                            <input v-model="loginForm.username" type="text" required
-                                class="w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                placeholder="请输入用户名">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
-                        <div class="relative">
-                            <span class="absolute left-3 top-3 text-gray-400">
-                                <i class="fas fa-lock"></i>
-                            </span>
-                            <input v-model="loginForm.password" type="password" required
-                                class="w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                placeholder="请输入密码">
-                        </div>
-                    </div>
-                    <button type="submit"
-                        class="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold"
-                        :disabled="loading">
-                        <i v-if="loading" class="fas fa-spinner fa-spin mr-2"></i>
-                        {{ loading ? '登录中...' : '登录' }}
-                    </button>
-                </form>
+                <el-form v-if="isLogin" :model="loginForm" @submit.prevent="handleLogin" label-position="top">
+                    <el-form-item label="用户名">
+                        <el-input v-model="loginForm.username" placeholder="请输入用户名" prefix-icon="User" size="large"></el-input>
+                    </el-form-item>
+                    <el-form-item label="密码">
+                        <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" prefix-icon="Lock" size="large" show-password></el-input>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-button type="primary" @click="handleLogin" :loading="loading" style="width: 100%; height: 44px; font-size: 16px;" size="large">
+                            {{ loading ? '登录中...' : '登录' }}
+                        </el-button>
+                    </el-form-item>
+                </el-form>
 
                 <!-- 注册表单 -->
-                <form v-else @submit.prevent="handleRegister" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
-                        <div class="relative">
-                            <span class="absolute left-3 top-3 text-gray-400">
-                                <i class="fas fa-user"></i>
-                            </span>
-                            <input v-model="registerForm.username" type="text" required
-                                class="w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                placeholder="请输入用户名">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
-                        <div class="relative">
-                            <span class="absolute left-3 top-3 text-gray-400">
-                                <i class="fas fa-lock"></i>
-                            </span>
-                            <input v-model="registerForm.password" type="password" required
-                                class="w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                placeholder="请输入密码">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">角色</label>
-                        <div class="relative">
-                            <span class="absolute left-3 top-3 text-gray-400">
-                                <i class="fas fa-user-tag"></i>
-                            </span>
-                            <select v-model="registerForm.role"
-                                class="w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 appearance-none">
-                                <option value="VIEWER">观察者 (VIEWER)</option>
-                                <option value="OPERATOR">操作员 (OPERATOR)</option>
-                                <option value="TECHNICIAN">技术员 (TECHNICIAN)</option>
-                                <option value="ADMIN">管理员 (ADMIN)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button type="submit"
-                        class="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold"
-                        :disabled="loading">
-                        <i v-if="loading" class="fas fa-spinner fa-spin mr-2"></i>
-                        {{ loading ? '注册中...' : '注册' }}
-                    </button>
-                </form>
+                <el-form v-else :model="registerForm" @submit.prevent="handleRegister" label-position="top">
+                    <el-form-item label="用户名">
+                        <el-input v-model="registerForm.username" placeholder="请输入用户名" prefix-icon="User" size="large"></el-input>
+                    </el-form-item>
+                    <el-form-item label="密码">
+                        <el-input v-model="registerForm.password" type="password" placeholder="请输入密码" prefix-icon="Lock" size="large" show-password></el-input>
+                    </el-form-item>
+                    <el-form-item label="角色">
+                        <el-select v-model="registerForm.role" placeholder="请选择角色" style="width: 100%;" size="large">
+                            <el-option label="观察者" value="VIEWER"></el-option>
+                            <el-option label="操作员" value="OPERATOR"></el-option>
+                            <el-option label="技术员" value="TECHNICIAN"></el-option>
+                            <el-option label="管理员" value="ADMIN"></el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-button type="primary" @click="handleRegister" :loading="loading" style="width: 100%; height: 44px; font-size: 16px;" size="large">
+                            {{ loading ? '注册中...' : '注册' }}
+                        </el-button>
+                    </el-form-item>
+                </el-form>
 
                 <!-- 快速登录 -->
-                <div v-if="isLogin" class="mt-6 pt-6 border-t">
-                    <p class="text-sm text-gray-500 text-center mb-3">快速登录（演示账户）</p>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button @click="quickLogin('admin', '123456')"
-                            class="py-2 px-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm">
-                            <i class="fas fa-crown mr-1"></i>管理员
-                        </button>
-                        <button @click="quickLogin('tech', '123456')"
-                            class="py-2 px-3 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm">
-                            <i class="fas fa-tools mr-1"></i>技术员
-                        </button>
-                        <button @click="quickLogin('operator', '123456')"
-                            class="py-2 px-3 bg-yellow-50 text-yellow-600 rounded-lg hover:bg-yellow-100 transition-colors text-sm">
-                            <i class="fas fa-hand-pointer mr-1"></i>操作员
-                        </button>
-                        <button @click="quickLogin('viewer', '123456')"
-                            class="py-2 px-3 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors text-sm">
-                            <i class="fas fa-eye mr-1"></i>观察者
-                        </button>
-                    </div>
+                <div v-if="isLogin" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ebeef5;">
+                    <p style="font-size: 13px; color: #909399; text-align: center; margin-bottom: 12px;">快速登录（演示账户）</p>
+                    <el-row :gutter="10">
+                        <el-col :span="12">
+                            <el-button @click="quickLogin('admin', '123456')" style="width: 100%;" type="danger" plain size="default">
+                                <i class="fas fa-crown" style="margin-right: 4px;"></i>管理员
+                            </el-button>
+                        </el-col>
+                        <el-col :span="12">
+                            <el-button @click="quickLogin('tech', '123456')" style="width: 100%;" type="primary" plain size="default">
+                                <i class="fas fa-tools" style="margin-right: 4px;"></i>技术员
+                            </el-button>
+                        </el-col>
+                    </el-row>
+                    <el-row :gutter="10" style="margin-top: 10px;">
+                        <el-col :span="12">
+                            <el-button @click="quickLogin('operator', '123456')" style="width: 100%;" type="warning" plain size="default">
+                                <i class="fas fa-hand-pointer" style="margin-right: 4px;"></i>操作员
+                            </el-button>
+                        </el-col>
+                        <el-col :span="12">
+                            <el-button @click="quickLogin('viewer', '123456')" style="width: 100%;" type="info" plain size="default">
+                                <i class="fas fa-eye" style="margin-right: 4px;"></i>观察者
+                            </el-button>
+                        </el-col>
+                    </el-row>
                 </div>
 
                 <!-- 错误提示 -->
-                <div v-if="error" class="mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm text-center">
-                    <i class="fas fa-exclamation-circle mr-1"></i>{{ error }}
-                </div>
-            </div>
+                <el-alert v-if="error" :title="error" type="error" show-icon style="margin-top: 15px;" @close="error = ''"></el-alert>
+            </el-card>
         </div>
     `,
 
     setup() {
         const isLogin = Vue.ref(true);
+        const activeTab = Vue.ref('login');
         const loading = Vue.ref(false);
         const error = Vue.ref('');
 
-        const loginForm = Vue.reactive({
-            username: '',
-            password: ''
-        });
+        const loginForm = Vue.reactive({ username: '', password: '' });
+        const registerForm = Vue.reactive({ username: '', password: '', role: 'VIEWER' });
 
-        const registerForm = Vue.reactive({
-            username: '',
-            password: '',
-            role: 'VIEWER'
-        });
+        const onTabChange = (tab) => {
+            isLogin.value = tab.paneName === 'login';
+        };
 
         const handleLogin = async () => {
             loading.value = true;
@@ -208,14 +160,9 @@ const Login = {
         };
 
         return {
-            isLogin,
-            loading,
-            error,
-            loginForm,
-            registerForm,
-            handleLogin,
-            handleRegister,
-            quickLogin
+            isLogin, activeTab, loading, error,
+            loginForm, registerForm,
+            onTabChange, handleLogin, handleRegister, quickLogin
         };
     }
 };

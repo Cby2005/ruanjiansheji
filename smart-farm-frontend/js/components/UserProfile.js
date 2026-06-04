@@ -1,132 +1,76 @@
 const UserProfile = {
     template: `
-        <div class="max-w-2xl mx-auto space-y-6">
+        <div style="max-width: 700px; margin: 0 auto;">
             <!-- 个人资料卡片 -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <!-- 顶部背景 -->
-                <div class="h-32 bg-gradient-to-r from-green-400 to-blue-500"></div>
-
-                <!-- 头像和基本信息 -->
-                <div class="px-6 pb-6">
-                    <div class="flex items-end -mt-16 mb-4">
-                        <div class="relative group">
-                            <div class="w-24 h-24 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-200">
-                                <img v-if="avatarUrl" :src="avatarUrl" class="w-full h-full object-cover" />
-                                <div v-else class="w-full h-full flex items-center justify-center text-white text-3xl"
-                                    :class="getRoleBgColor(user.role)">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                            </div>
-                            <label class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
-                                <i class="fas fa-camera text-white text-xl"></i>
-                                <input type="file" accept="image/*" class="hidden" @change="onAvatarChange" />
+            <el-card shadow="hover" style="margin-bottom: 20px;">
+                <div style="background: linear-gradient(135deg, #67c23a, #409eff); height: 120px; margin: -20px -20px 0; border-radius: 4px 4px 0 0;"></div>
+                <div style="padding: 0 0 20px; margin-top: -40px;">
+                    <div style="display: flex; align-items: flex-end;">
+                        <div style="position: relative; display: inline-block;">
+                            <el-avatar :size="96" :style="{ backgroundColor: getRoleColor(user.role), border: '4px solid #fff', boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }">
+                                <img v-if="avatarUrl" :src="avatarUrl" style="width: 100%; height: 100%; object-fit: cover;" />
+                                <i v-else class="fas fa-user" style="font-size: 36px;"></i>
+                            </el-avatar>
+                            <label style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); border-radius: 50%; cursor: pointer; opacity: 0; transition: opacity 0.3s;"
+                                onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
+                                <i class="fas fa-camera" style="color: #fff; font-size: 20px;"></i>
+                                <input type="file" accept="image/*" style="display: none;" @change="onAvatarChange" />
                             </label>
                         </div>
-                        <div class="ml-4 mb-1">
-                            <h2 class="text-2xl font-bold text-gray-800">{{ user.username }}</h2>
-                            <span class="inline-block px-3 py-1 text-xs rounded-full mt-1"
-                                :class="getRoleBadgeColor(user.role)">
-                                {{ getRoleName(user.role) }}
-                            </span>
+                        <div style="margin-left: 20px; padding-bottom: 5px;">
+                            <h2 style="margin: 0; font-size: 22px; color: #303133;">{{ user.username }}</h2>
+                            <el-tag :type="getRoleTagType(user.role)" size="small" style="margin-top: 5px;">{{ getRoleName(user.role) }}</el-tag>
                         </div>
                     </div>
-                    <p class="text-sm text-gray-500">
-                        <i class="fas fa-info-circle mr-1"></i>鼠标悬停头像可更换
+                    <p style="color: #909399; font-size: 13px; margin-top: 10px;">
+                        <i class="fas fa-info-circle" style="margin-right: 4px;"></i>鼠标悬停头像可更换
                     </p>
                 </div>
-            </div>
+            </el-card>
 
-            <!-- 修改密码按钮 -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center justify-between">
+            <!-- 账户安全 -->
+            <el-card shadow="hover" style="margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-800">
-                            <i class="fas fa-lock mr-2 text-yellow-500"></i>账户安全
-                        </h3>
-                        <p class="text-sm text-gray-500 mt-1">定期修改密码可以提高账户安全性</p>
+                        <h3 style="margin: 0; font-size: 16px;"><i class="fas fa-lock" style="margin-right: 8px; color: #e6a23c;"></i>账户安全</h3>
+                        <p style="color: #909399; font-size: 13px; margin-top: 5px;">定期修改密码可以提高账户安全性</p>
                     </div>
-                    <button @click="showPasswordModal = true"
-                        class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors">
-                        <i class="fas fa-key mr-2"></i>修改密码
-                    </button>
+                    <el-button type="warning" @click="showPasswordModal = true">
+                        <i class="fas fa-key" style="margin-right: 6px;"></i>修改密码
+                    </el-button>
                 </div>
-            </div>
-
-            <!-- 修改密码弹窗 -->
-            <div v-if="showPasswordModal" class="fixed inset-0 flex items-center justify-center z-50">
-                <div class="absolute inset-0 bg-black bg-opacity-50" @click="showPasswordModal = false"></div>
-                <div class="relative bg-white rounded-lg shadow-xl w-96 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-800">
-                            <i class="fas fa-lock mr-2 text-yellow-500"></i>修改密码
-                        </h3>
-                        <button @click="showPasswordModal = false" class="text-gray-400 hover:text-gray-600">
-                            <i class="fas fa-times text-xl"></i>
-                        </button>
-                    </div>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-1">当前密码</label>
-                            <input v-model="passwordForm.oldPassword" type="password"
-                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                placeholder="请输入当前密码" />
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-1">新密码</label>
-                            <input v-model="passwordForm.newPassword" type="password"
-                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                placeholder="请输入新密码" />
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600 mb-1">确认新密码</label>
-                            <input v-model="passwordForm.confirmPassword" type="password"
-                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                placeholder="再次输入新密码" />
-                        </div>
-                        <div class="flex justify-end space-x-3 mt-6">
-                            <button @click="showPasswordModal = false"
-                                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
-                                取消
-                            </button>
-                            <button @click="changePassword"
-                                class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
-                                <i class="fas fa-save mr-2"></i>确认修改
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </el-card>
 
             <!-- 账号信息 -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                    <i class="fas fa-info-circle mr-2 text-blue-500"></i>账号信息
-                </h3>
-                <div class="space-y-3">
-                    <div class="flex justify-between p-3 bg-gray-50 rounded">
-                        <span class="text-gray-600">用户名</span>
-                        <span class="font-medium">{{ user.username }}</span>
-                    </div>
-                    <div class="flex justify-between p-3 bg-gray-50 rounded">
-                        <span class="text-gray-600">角色</span>
-                        <span class="font-medium">{{ getRoleName(user.role) }}</span>
-                    </div>
-                    <div class="flex justify-between p-3 bg-gray-50 rounded">
-                        <span class="text-gray-600">用户ID</span>
-                        <span class="font-medium">{{ user.id }}</span>
-                    </div>
-                </div>
-            </div>
+            <el-card shadow="hover">
+                <template #header>
+                    <span style="font-weight: bold;"><i class="fas fa-info-circle" style="margin-right: 8px; color: #409eff;"></i>账号信息</span>
+                </template>
+                <el-descriptions :column="1" border>
+                    <el-descriptions-item label="用户名">{{ user.username }}</el-descriptions-item>
+                    <el-descriptions-item label="角色">{{ getRoleName(user.role) }}</el-descriptions-item>
+                    <el-descriptions-item label="用户ID">{{ user.id }}</el-descriptions-item>
+                </el-descriptions>
+            </el-card>
 
-            <!-- 消息提示 -->
-            <div v-if="message" class="fixed bottom-4 right-4 p-4 rounded-lg shadow-lg"
-                :class="message.type === 'success' ? 'bg-green-500' : 'bg-red-500'">
-                <div class="flex items-center text-white">
-                    <i :class="message.type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"
-                        class="mr-2"></i>
-                    <span>{{ message.text }}</span>
-                </div>
-            </div>
+            <!-- 修改密码弹窗 -->
+            <el-dialog v-model="showPasswordModal" title="修改密码" width="450px">
+                <el-form :model="passwordForm" label-width="80px">
+                    <el-form-item label="当前密码">
+                        <el-input v-model="passwordForm.oldPassword" type="password" placeholder="请输入当前密码" show-password></el-input>
+                    </el-form-item>
+                    <el-form-item label="新密码">
+                        <el-input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码" show-password></el-input>
+                    </el-form-item>
+                    <el-form-item label="确认密码">
+                        <el-input v-model="passwordForm.confirmPassword" type="password" placeholder="再次输入新密码" show-password></el-input>
+                    </el-form-item>
+                </el-form>
+                <template #footer>
+                    <el-button @click="showPasswordModal = false">取消</el-button>
+                    <el-button type="primary" @click="changePassword">确认修改</el-button>
+                </template>
+            </el-dialog>
         </div>
     `,
 
@@ -141,7 +85,6 @@ const UserProfile = {
         });
 
         const avatarUrl = Vue.ref(localStorage.getItem('avatar_' + user.value.username) || '');
-        const message = Vue.ref(null);
         const showPasswordModal = Vue.ref(false);
 
         const passwordForm = Vue.reactive({
@@ -150,53 +93,48 @@ const UserProfile = {
             confirmPassword: ''
         });
 
-        const showMessage = (text, type = 'success') => {
-            message.value = { text, type };
-            setTimeout(() => message.value = null, 3000);
-        };
-
         const getRoleName = (role) => {
             const map = { 'ADMIN': '管理员', 'TECHNICIAN': '技术员', 'OPERATOR': '操作员', 'VIEWER': '观察者' };
             return map[role] || role;
         };
 
-        const getRoleBgColor = (role) => {
-            const map = { 'ADMIN': 'bg-red-500', 'TECHNICIAN': 'bg-blue-500', 'OPERATOR': 'bg-yellow-500', 'VIEWER': 'bg-gray-500' };
-            return map[role] || 'bg-gray-500';
+        const getRoleColor = (role) => {
+            const map = { 'ADMIN': '#f56c6c', 'TECHNICIAN': '#409eff', 'OPERATOR': '#e6a23c', 'VIEWER': '#909399' };
+            return map[role] || '#909399';
         };
 
-        const getRoleBadgeColor = (role) => {
-            const map = { 'ADMIN': 'bg-red-100 text-red-800', 'TECHNICIAN': 'bg-blue-100 text-blue-800', 'OPERATOR': 'bg-yellow-100 text-yellow-800', 'VIEWER': 'bg-gray-100 text-gray-800' };
-            return map[role] || 'bg-gray-100 text-gray-800';
+        const getRoleTagType = (role) => {
+            const map = { 'ADMIN': 'danger', 'TECHNICIAN': '', 'OPERATOR': 'warning', 'VIEWER': 'info' };
+            return map[role] || '';
         };
 
         const onAvatarChange = (event) => {
             const file = event.target.files[0];
             if (!file) return;
             if (file.size > 2 * 1024 * 1024) {
-                showMessage('头像文件不能超过 2MB', 'error');
+                ElementPlus.ElMessage.error('头像文件不能超过 2MB');
                 return;
             }
             const reader = new FileReader();
             reader.onload = (e) => {
                 avatarUrl.value = e.target.result;
                 localStorage.setItem('avatar_' + user.value.username, e.target.result);
-                showMessage('头像更换成功');
+                ElementPlus.ElMessage.success('头像更换成功');
             };
             reader.readAsDataURL(file);
         };
 
         const changePassword = async () => {
             if (!passwordForm.oldPassword || !passwordForm.newPassword) {
-                showMessage('请填写完整密码信息', 'error');
+                ElementPlus.ElMessage.warning('请填写完整密码信息');
                 return;
             }
             if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-                showMessage('两次输入的新密码不一致', 'error');
+                ElementPlus.ElMessage.error('两次输入的新密码不一致');
                 return;
             }
             if (passwordForm.newPassword.length < 6) {
-                showMessage('新密码长度不能少于6位', 'error');
+                ElementPlus.ElMessage.error('新密码长度不能少于6位');
                 return;
             }
             try {
@@ -214,30 +152,22 @@ const UserProfile = {
                 });
                 const data = await response.json();
                 if (data.code === 200) {
-                    showMessage('密码修改成功');
+                    ElementPlus.ElMessage.success('密码修改成功');
+                    showPasswordModal.value = false;
                     passwordForm.oldPassword = '';
                     passwordForm.newPassword = '';
                     passwordForm.confirmPassword = '';
                 } else {
-                    showMessage(data.message || '密码修改失败', 'error');
+                    ElementPlus.ElMessage.error(data.message || '密码修改失败');
                 }
             } catch (error) {
-                showMessage('修改失败: ' + error.message, 'error');
+                ElementPlus.ElMessage.error('修改失败: ' + error.message);
             }
         };
 
         return {
-            user,
-            avatarUrl,
-            message,
-            showPasswordModal,
-            passwordForm,
-            getRoleName,
-            getRoleBgColor,
-            getRoleBadgeColor,
-            onAvatarChange,
-            changePassword,
-            showMessage
+            user, avatarUrl, showPasswordModal, passwordForm,
+            getRoleName, getRoleColor, getRoleTagType, onAvatarChange, changePassword
         };
     }
 };

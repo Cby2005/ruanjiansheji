@@ -1,232 +1,216 @@
 const Dashboard = {
     template: `
-        <div class="space-y-6">
-            <!-- 系统状态卡片 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div v-for="stat in stats" :key="stat.title"
-                    class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-500">{{ stat.title }}</p>
-                            <p class="text-3xl font-bold" :class="stat.color">{{ stat.value }}</p>
+        <div>
+            <!-- 统计卡片 -->
+            <el-row :gutter="20" style="margin-bottom: 20px;">
+                <el-col :span="4" v-for="stat in stats" :key="stat.label">
+                    <el-card class="stat-card" shadow="hover" :body-style="{ padding: '20px' }">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div class="stat-value" :style="{ color: stat.color }">{{ stat.value }}</div>
+                                <div class="stat-label">{{ stat.label }}</div>
+                            </div>
+                            <i :class="stat.icon" class="stat-icon" :style="{ color: stat.color }"></i>
                         </div>
-                        <div class="w-12 h-12 rounded-full flex items-center justify-center" :class="stat.bgColor">
-                            <i :class="stat.icon" class="text-xl text-white"></i>
-                        </div>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-2">{{ stat.desc }}</p>
-                </div>
-            </div>
+                    </el-card>
+                </el-col>
+            </el-row>
+
+            <!-- 图表区域 -->
+            <el-row :gutter="20" style="margin-bottom: 20px;">
+                <el-col :span="16">
+                    <el-card shadow="hover">
+                        <template #header>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: bold;">环境数据变化趋势</span>
+                                <el-button-group size="small">
+                                    <el-button :type="chartType === 'temp' ? 'primary' : ''" @click="updateChart('temp')">温度</el-button>
+                                    <el-button :type="chartType === 'humidity' ? 'primary' : ''" @click="updateChart('humidity')">湿度</el-button>
+                                    <el-button :type="chartType === 'light' ? 'primary' : ''" @click="updateChart('light')">光照</el-button>
+                                </el-button-group>
+                            </div>
+                        </template>
+                        <div ref="chartRef" style="height: 350px;"></div>
+                    </el-card>
+                </el-col>
+                <el-col :span="8">
+                    <el-card shadow="hover" style="height: 100%;">
+                        <template #header>
+                            <span style="font-weight: bold;">设备状态概览</span>
+                        </template>
+                        <div ref="pieRef" style="height: 300px;"></div>
+                    </el-card>
+                </el-col>
+            </el-row>
 
             <!-- 快速操作 -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold mb-4 text-gray-800">
-                    <i class="fas fa-bolt mr-2 text-yellow-500"></i>快速操作
-                </h3>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <button @click="initDevices"
-                        class="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-center">
-                        <i class="fas fa-download text-2xl text-blue-500 mb-2"></i>
-                        <p class="text-sm text-gray-700">初始化设备</p>
-                    </button>
-                    <button @click="initUsers"
-                        class="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors text-center">
-                        <i class="fas fa-users text-2xl text-purple-500 mb-2"></i>
-                        <p class="text-sm text-gray-700">初始化用户</p>
-                    </button>
-                    <button @click="collectData"
-                        class="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors text-center">
-                        <i class="fas fa-database text-2xl text-green-500 mb-2"></i>
-                        <p class="text-sm text-gray-700">采集环境数据</p>
-                    </button>
-                    <button @click="healthCheck"
-                        class="p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors text-center">
-                        <i class="fas fa-heartbeat text-2xl text-orange-500 mb-2"></i>
-                        <p class="text-sm text-gray-700">系统健康检查</p>
-                    </button>
-                </div>
-            </div>
-
-            <!-- 最新环境数据 -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h3 class="text-lg font-semibold mb-4 text-gray-800">
-                        <i class="fas fa-thermometer-half mr-2 text-red-500"></i>环境数据
-                    </h3>
-                    <div v-if="envData" class="space-y-4">
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
-                            <span class="text-gray-600">空气温度</span>
-                            <span class="font-semibold text-red-500">{{ envData.airTemperature }}°C</span>
-                        </div>
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
-                            <span class="text-gray-600">空气湿度</span>
-                            <span class="font-semibold text-blue-500">{{ envData.airHumidity }}%</span>
-                        </div>
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
-                            <span class="text-gray-600">土壤湿度</span>
-                            <span class="font-semibold text-green-500">{{ envData.soilHumidity }}%</span>
-                        </div>
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
-                            <span class="text-gray-600">光照强度</span>
-                            <span class="font-semibold text-yellow-500">{{ envData.lightIntensity }} lux</span>
-                        </div>
-                    </div>
-                    <div v-else class="text-center text-gray-400 py-8">
-                        <i class="fas fa-inbox text-4xl mb-2"></i>
-                        <p>暂无数据，请先采集环境数据</p>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h3 class="text-lg font-semibold mb-4 text-gray-800">
-                        <i class="fas fa-cogs mr-2 text-blue-500"></i>设备状态
-                    </h3>
-                    <div v-if="devices.length" class="space-y-3">
-                        <div v-for="device in devices.slice(0, 5)" :key="device.id"
-                            class="flex justify-between items-center p-3 bg-gray-50 rounded">
-                            <div>
-                                <p class="font-medium text-gray-800">{{ device.deviceName }}</p>
-                                <p class="text-xs text-gray-400">{{ device.deviceCode }}</p>
-                            </div>
-                            <span class="px-2 py-1 text-xs rounded-full"
-                                :class="getStatusClass(device.state)">
-                                {{ getStatusText(device.state) }}
-                            </span>
-                        </div>
-                    </div>
-                    <div v-else class="text-center text-gray-400 py-8">
-                        <i class="fas fa-inbox text-4xl mb-2"></i>
-                        <p>暂无设备，请先初始化设备</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 消息提示 -->
-            <div v-if="message" class="fixed bottom-4 right-4 p-4 rounded-lg shadow-lg"
-                :class="message.type === 'success' ? 'bg-green-500' : 'bg-red-500'">
-                <div class="flex items-center text-white">
-                    <i :class="message.type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"
-                        class="mr-2"></i>
-                    <span>{{ message.text }}</span>
-                </div>
-            </div>
+            <el-card shadow="hover">
+                <template #header>
+                    <span style="font-weight: bold;">快速操作</span>
+                </template>
+                <el-row :gutter="20">
+                    <el-col :span="6">
+                        <el-button type="primary" plain style="width: 100%; height: 60px;" @click="collectData">
+                            <i class="fas fa-database" style="margin-right: 8px;"></i>采集环境数据
+                        </el-button>
+                    </el-col>
+                    <el-col :span="6">
+                        <el-button type="success" plain style="width: 100%; height: 60px;" @click="$router.push('/devices')">
+                            <i class="fas fa-cogs" style="margin-right: 8px;"></i>设备管理
+                        </el-button>
+                    </el-col>
+                    <el-col :span="6">
+                        <el-button type="warning" plain style="width: 100%; height: 60px;" @click="$router.push('/ai-assistant')">
+                            <i class="fas fa-robot" style="margin-right: 8px;"></i>AI 决策
+                        </el-button>
+                    </el-col>
+                    <el-col :span="6">
+                        <el-button type="info" plain style="width: 100%; height: 60px;" @click="$router.push('/statistics')">
+                            <i class="fas fa-chart-bar" style="margin-right: 8px;"></i>查看统计
+                        </el-button>
+                    </el-col>
+                </el-row>
+            </el-card>
         </div>
     `,
 
     setup() {
+        const API_BASE_URL = 'http://localhost:8080';
+        const chartRef = Vue.ref(null);
+        const pieRef = Vue.ref(null);
+        const chartType = Vue.ref('temp');
+        let chartInstance = null;
+        let pieInstance = null;
+
         const stats = Vue.ref([
-            { title: '设备总数', value: '-', icon: 'fas fa-microchip', color: 'text-blue-600', bgColor: 'bg-blue-500', desc: '已注册设备数量' },
-            { title: '运行中', value: '-', icon: 'fas fa-play-circle', color: 'text-green-600', bgColor: 'bg-green-500', desc: '正在运行的设备' },
-            { title: '故障设备', value: '-', icon: 'fas fa-exclamation-triangle', color: 'text-red-600', bgColor: 'bg-red-500', desc: '需要维修的设备' },
-            { title: '今日操作', value: '-', icon: 'fas fa-history', color: 'text-purple-600', bgColor: 'bg-purple-500', desc: '今日操作次数' }
+            { label: '土壤湿度', value: '--', icon: 'fas fa-tint', color: '#409eff' },
+            { label: '空气温度', value: '--', icon: 'fas fa-thermometer-half', color: '#f56c6c' },
+            { label: '光照强度', value: '--', icon: 'fas fa-sun', color: '#e6a23c' },
+            { label: 'CO₂浓度', value: '--', icon: 'fas fa-wind', color: '#67c23a' },
+            { label: '在线设备', value: '--', icon: 'fas fa-microchip', color: '#409eff' },
+            { label: '今日预警', value: '--', icon: 'fas fa-exclamation-triangle', color: '#f56c6c' }
         ]);
-
-        const envData = Vue.ref(null);
-        const devices = Vue.ref([]);
-        const message = Vue.ref(null);
-
-        const showMessage = (text, type = 'success') => {
-            message.value = { text, type };
-            setTimeout(() => message.value = null, 3000);
-        };
-
-        const getStatusClass = (status) => {
-            const map = {
-                'RUNNING': 'bg-green-100 text-green-800',
-                'STANDBY': 'bg-gray-100 text-gray-800',
-                'FAULT': 'bg-red-100 text-red-800',
-                'MAINTENANCE': 'bg-yellow-100 text-yellow-800',
-                'CALIBRATION': 'bg-blue-100 text-blue-800'
-            };
-            return map[status] || 'bg-gray-100 text-gray-800';
-        };
-
-        const getStatusText = (status) => {
-            const map = {
-                'RUNNING': '运行中',
-                'STANDBY': '待机',
-                'FAULT': '故障',
-                'MAINTENANCE': '维护中',
-                'CALIBRATION': '校准中'
-            };
-            return map[status] || status;
-        };
 
         const loadData = async () => {
             try {
-                const [overview, env, deviceList] = await Promise.all([
-                    statisticsApi.getOverview().catch(() => null),
-                    environmentApi.getLatest().catch(() => null),
-                    deviceApi.getList().catch(() => [])
+                const [env, overview] = await Promise.all([
+                    fetch(API_BASE_URL + '/api/environment/latest', {
+                        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+                    }).then(r => r.json()).catch(() => null),
+                    fetch(API_BASE_URL + '/api/statistics/overview', {
+                        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+                    }).then(r => r.json()).catch(() => null)
                 ]);
 
-                if (overview) {
-                    stats.value[0].value = overview.deviceTotal || 0;
-                    stats.value[1].value = overview.deviceRunning || 0;
-                    stats.value[2].value = overview.deviceFault || 0;
-                    stats.value[3].value = overview.todayOperations || 0;
+                if (env && env.code === 200 && env.data) {
+                    const d = env.data;
+                    stats.value[0].value = (d.soilHumidity || 0).toFixed(1) + '%';
+                    stats.value[1].value = (d.airTemperature || 0).toFixed(1) + '°C';
+                    stats.value[2].value = (d.lightIntensity || 0).toFixed(0) + ' lux';
+                    stats.value[3].value = (d.co2 || 0).toFixed(0) + ' ppm';
                 }
-
-                envData.value = env;
-                devices.value = deviceList || [];
-            } catch (error) {
-                console.error('Load data failed:', error);
+                if (overview && overview.code === 200 && overview.data) {
+                    stats.value[4].value = overview.data.deviceRunning || 0;
+                    stats.value[5].value = overview.data.pendingAlerts || 0;
+                }
+            } catch (e) {
+                console.error('Load dashboard data failed:', e);
             }
         };
 
-        const initDevices = async () => {
-            try {
-                await systemApi.initDevices();
-                showMessage('设备初始化成功');
-                loadData();
-            } catch (error) {
-                showMessage('设备初始化失败: ' + error.message, 'error');
-            }
+        const initChart = () => {
+            if (!chartRef.value) return;
+            chartInstance = echarts.init(chartRef.value);
+            updateChart('temp');
         };
 
-        const initUsers = async () => {
-            try {
-                await systemApi.initUsers();
-                showMessage('用户初始化成功');
-            } catch (error) {
-                showMessage('用户初始化失败: ' + error.message, 'error');
+        const updateChart = (type) => {
+            chartType.value = type;
+            if (!chartInstance) return;
+
+            const hours = [];
+            const now = new Date();
+            for (let i = 23; i >= 0; i--) {
+                const h = new Date(now - i * 3600000);
+                hours.push(h.getHours() + ':00');
             }
+
+            const configs = {
+                temp: { name: '空气温度(°C)', color: '#f56c6c', base: 25, range: 10 },
+                humidity: { name: '空气湿度(%)', color: '#409eff', base: 60, range: 20 },
+                light: { name: '光照强度(lux)', color: '#e6a23c', base: 5000, range: 3000 }
+            };
+            const cfg = configs[type];
+            const data = hours.map(() => Math.round((cfg.base + (Math.random() - 0.5) * cfg.range) * 10) / 10);
+
+            chartInstance.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', data: hours, boundaryGap: false },
+                yAxis: { type: 'value', name: cfg.name },
+                series: [{
+                    name: cfg.name,
+                    type: 'line',
+                    data: data,
+                    smooth: true,
+                    areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: cfg.color + '40' }, { offset: 1, color: cfg.color + '05' }] } },
+                    lineStyle: { color: cfg.color, width: 2 },
+                    itemStyle: { color: cfg.color }
+                }]
+            });
+        };
+
+        const initPie = () => {
+            if (!pieRef.value) return;
+            pieInstance = echarts.init(pieRef.value);
+            pieInstance.setOption({
+                tooltip: { trigger: 'item' },
+                legend: { bottom: 0 },
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
+                    label: { show: false },
+                    emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
+                    data: [
+                        { value: 3, name: '运行中', itemStyle: { color: '#67c23a' } },
+                        { value: 5, name: '待机', itemStyle: { color: '#909399' } },
+                        { value: 1, name: '故障', itemStyle: { color: '#f56c6c' } },
+                        { value: 1, name: '维护', itemStyle: { color: '#e6a23c' } }
+                    ]
+                }]
+            });
         };
 
         const collectData = async () => {
             try {
-                await environmentApi.collectAndControl();
-                showMessage('环境数据采集成功');
-                loadData();
-            } catch (error) {
-                showMessage('数据采集失败: ' + error.message, 'error');
+                const res = await fetch(API_BASE_URL + '/api/environment/collect-and-control', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+                });
+                const data = await res.json();
+                if (data.code === 200) {
+                    ElementPlus.ElMessage.success('环境数据采集成功');
+                    loadData();
+                }
+            } catch (e) {
+                ElementPlus.ElMessage.error('采集失败');
             }
         };
 
-        const healthCheck = async () => {
-            try {
-                const result = await systemApi.health();
-                showMessage('系统状态: ' + result.status);
-            } catch (error) {
-                showMessage('健康检查失败: ' + error.message, 'error');
-            }
-        };
-
-        Vue.onMounted(() => {
-            loadData();
+        Vue.onMounted(async () => {
+            await loadData();
+            Vue.nextTick(() => {
+                initChart();
+                initPie();
+            });
+            window.addEventListener('resize', () => {
+                chartInstance?.resize();
+                pieInstance?.resize();
+            });
         });
 
-        return {
-            stats,
-            envData,
-            devices,
-            message,
-            getStatusClass,
-            getStatusText,
-            initDevices,
-            initUsers,
-            collectData,
-            healthCheck
-        };
+        return { stats, chartRef, pieRef, chartType, updateChart, collectData };
     }
 };

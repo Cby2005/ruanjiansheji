@@ -1,232 +1,187 @@
 const Statistics = {
     template: `
-        <div class="space-y-6">
-            <!-- 统计概览 -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- 设备统计 -->
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h3 class="text-lg font-semibold mb-4 text-gray-800">
-                        <i class="fas fa-microchip mr-2 text-blue-500"></i>设备统计
-                    </h3>
-                    <div v-if="deviceStats" class="space-y-4">
-                        <div class="flex justify-between items-center p-3 bg-blue-50 rounded">
-                            <span class="text-gray-600">设备总数</span>
-                            <span class="text-2xl font-bold text-blue-600">{{ deviceStats.total }}</span>
-                        </div>
-                        <div class="flex justify-between items-center p-3 bg-green-50 rounded">
-                            <span class="text-gray-600">在线设备</span>
-                            <span class="text-2xl font-bold text-green-600">{{ deviceStats.online }}</span>
-                        </div>
-                        <div class="flex justify-between items-center p-3 bg-yellow-50 rounded">
-                            <span class="text-gray-600">运行中</span>
-                            <span class="text-2xl font-bold text-yellow-600">{{ deviceStats.running }}</span>
-                        </div>
-                        <div class="flex justify-between items-center p-3 bg-red-50 rounded">
-                            <span class="text-gray-600">故障设备</span>
-                            <span class="text-2xl font-bold text-red-600">{{ deviceStats.fault }}</span>
-                        </div>
-                        <div class="flex justify-between items-center p-3 bg-purple-50 rounded">
-                            <span class="text-gray-600">今日操作</span>
-                            <span class="text-2xl font-bold text-purple-600">{{ deviceStats.todayOperations }}</span>
-                        </div>
-                    </div>
-                    <div v-else class="text-center text-gray-400 py-8">
-                        <i class="fas fa-spinner fa-spin text-4xl"></i>
-                    </div>
-                </div>
-
-                <!-- 环境统计 -->
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h3 class="text-lg font-semibold mb-4 text-gray-800">
-                        <i class="fas fa-leaf mr-2 text-green-500"></i>环境统计
-                    </h3>
-                    <div v-if="envStats" class="space-y-4">
-                        <div class="flex justify-between items-center p-3 bg-red-50 rounded">
-                            <span class="text-gray-600">平均温度</span>
-                            <span class="text-2xl font-bold text-red-600">{{ envStats.avgTemperature }}°C</span>
-                        </div>
-                        <div class="flex justify-between items-center p-3 bg-blue-50 rounded">
-                            <span class="text-gray-600">平均湿度</span>
-                            <span class="text-2xl font-bold text-blue-600">{{ envStats.avgHumidity }}%</span>
-                        </div>
-                        <div class="flex justify-between items-center p-3 bg-green-50 rounded">
-                            <span class="text-gray-600">平均土壤湿度</span>
-                            <span class="text-2xl font-bold text-green-600">{{ envStats.avgSoilHumidity }}%</span>
-                        </div>
-                        <div class="flex justify-between items-center p-3 bg-yellow-50 rounded">
-                            <span class="text-gray-600">平均光照</span>
-                            <span class="text-2xl font-bold text-yellow-600">{{ envStats.avgLight }} lux</span>
-                        </div>
-                        <div class="flex justify-between items-center p-3 bg-orange-50 rounded">
-                            <span class="text-gray-600">最大虫情指数</span>
-                            <span class="text-2xl font-bold text-orange-600">{{ envStats.maxPest }}</span>
-                        </div>
-                    </div>
-                    <div v-else class="text-center text-gray-400 py-8">
-                        <i class="fas fa-spinner fa-spin text-4xl"></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 产量预测 -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold mb-4 text-gray-800">
-                    <i class="fas fa-chart-line mr-2 text-purple-500"></i>产量预测
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">作物名称</label>
-                            <input v-model="yieldForm.cropName"
-                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                placeholder="例：番茄">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">基础产量 (kg/亩)</label>
-                            <input v-model.number="yieldForm.baseYield" type="number"
-                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                placeholder="例：5000">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">环境适宜度 (0-1)</label>
-                            <input v-model.number="yieldForm.envScore" type="number" step="0.1" min="0" max="1"
-                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                placeholder="例：0.85">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">农事完成率 (0-1)</label>
-                            <input v-model.number="yieldForm.taskScore" type="number" step="0.1" min="0" max="1"
-                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                placeholder="例：0.9">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">设备稳定系数 (0-1)</label>
-                            <input v-model.number="yieldForm.deviceScore" type="number" step="0.1" min="0" max="1"
-                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                placeholder="例：0.95">
-                        </div>
-                        <button @click="predictYield"
-                            class="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors">
-                            <i class="fas fa-calculator mr-2"></i>计算预测产量
-                        </button>
-                    </div>
-                    <div class="flex items-center justify-center">
-                        <div v-if="yieldResult" class="text-center p-8 bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl">
-                            <p class="text-gray-500 mb-2">预测产量</p>
-                            <p class="text-5xl font-bold text-purple-600">{{ yieldResult.predictedYield }}</p>
-                            <p class="text-gray-500 mt-2">kg/亩</p>
-                            <div class="mt-4 text-sm text-gray-400">
-                                <p>作物：{{ yieldResult.cropName }}</p>
-                                <p>计算公式：基础产量 × 环境适宜度 × 农事完成率 × 设备稳定系数</p>
+        <div>
+            <!-- 概览统计 -->
+            <el-row :gutter="20" style="margin-bottom: 20px;">
+                <el-col :span="6" v-for="stat in overviewStats" :key="stat.label">
+                    <el-card shadow="hover" :body-style="{ padding: '20px' }">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 28px; font-weight: bold;" :style="{ color: stat.color }">{{ stat.value }}</div>
+                                <div style="font-size: 13px; color: #909399; margin-top: 5px;">{{ stat.label }}</div>
                             </div>
+                            <i :class="stat.icon" style="font-size: 32px; opacity: 0.6;" :style="{ color: stat.color }"></i>
                         </div>
-                        <div v-else class="text-center text-gray-400">
-                            <i class="fas fa-calculator text-6xl mb-4"></i>
-                            <p>填写参数后点击计算</p>
-                        </div>
+                    </el-card>
+                </el-col>
+            </el-row>
+
+            <!-- 图表 -->
+            <el-row :gutter="20" style="margin-bottom: 20px;">
+                <el-col :span="12">
+                    <el-card shadow="hover">
+                        <template #header>
+                            <span style="font-weight: bold;">设备操作统计</span>
+                        </template>
+                        <div ref="barRef" style="height: 350px;"></div>
+                    </el-card>
+                </el-col>
+                <el-col :span="12">
+                    <el-card shadow="hover">
+                        <template #header>
+                            <span style="font-weight: bold;">环境数据分布</span>
+                        </template>
+                        <div ref="radarRef" style="height: 350px;"></div>
+                    </el-card>
+                </el-col>
+            </el-row>
+
+            <!-- 操作日志表格 -->
+            <el-card shadow="hover">
+                <template #header>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: bold;">设备操作日志</span>
+                        <el-form :inline="true" style="margin-bottom: 0;">
+                            <el-form-item label="设备编码" style="margin-bottom: 0;">
+                                <el-input v-model="queryDeviceCode" placeholder="输入设备编码" clearable size="small" style="width: 180px;"></el-input>
+                            </el-form-item>
+                            <el-form-item style="margin-bottom: 0;">
+                                <el-button type="primary" size="small" @click="loadLogs"><i class="fas fa-search" style="margin-right: 4px;"></i>查询</el-button>
+                            </el-form-item>
+                        </el-form>
                     </div>
+                </template>
+                <el-table :data="logs" stripe border style="width: 100%;">
+                    <el-table-column prop="id" label="ID" width="70"></el-table-column>
+                    <el-table-column prop="deviceCode" label="设备编码" width="150"></el-table-column>
+                    <el-table-column prop="operationType" label="操作类型" width="120">
+                        <template #default="{ row }">
+                            <el-tag :type="getOpTagType(row.operationType)" size="small">{{ row.operationType }}</el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="operator" label="操作人" width="100"></el-table-column>
+                    <el-table-column prop="result" label="操作结果"></el-table-column>
+                    <el-table-column prop="operationTime" label="操作时间" width="180"></el-table-column>
+                </el-table>
+                <div style="margin-top: 15px; text-align: right;">
+                    <el-pagination
+                        v-model:current-page="currentPage"
+                        :page-size="pageSize"
+                        :total="total"
+                        layout="total, prev, pager, next"
+                        @current-change="loadLogs">
+                    </el-pagination>
                 </div>
-            </div>
-
-            <!-- 加载状态 -->
-            <div v-if="loading" class="text-center py-12">
-                <i class="fas fa-spinner fa-spin text-4xl text-purple-500"></i>
-                <p class="text-gray-500 mt-4">加载中...</p>
-            </div>
-
-            <!-- 消息提示 -->
-            <div v-if="message" class="fixed bottom-4 right-4 p-4 rounded-lg shadow-lg"
-                :class="message.type === 'success' ? 'bg-green-500' : 'bg-red-500'">
-                <div class="flex items-center text-white">
-                    <i :class="message.type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"
-                        class="mr-2"></i>
-                    <span>{{ message.text }}</span>
-                </div>
-            </div>
+            </el-card>
         </div>
     `,
 
     setup() {
-        const deviceStats = Vue.ref(null);
-        const envStats = Vue.ref(null);
-        const loading = Vue.ref(false);
-        const message = Vue.ref(null);
-        const yieldResult = Vue.ref(null);
+        const API_BASE_URL = 'http://localhost:8080';
+        const barRef = Vue.ref(null);
+        const radarRef = Vue.ref(null);
+        const logs = Vue.ref([]);
+        const queryDeviceCode = Vue.ref('');
+        const currentPage = Vue.ref(1);
+        const pageSize = 10;
+        const total = Vue.ref(0);
 
-        const yieldForm = Vue.reactive({
-            cropName: '番茄',
-            baseYield: 5000,
-            envScore: 0.85,
-            taskScore: 0.9,
-            deviceScore: 0.95
+        const overviewStats = Vue.ref([
+            { label: '设备总数', value: '--', icon: 'fas fa-microchip', color: '#409eff' },
+            { label: '运行中', value: '--', icon: 'fas fa-play-circle', color: '#67c23a' },
+            { label: '故障设备', value: '--', icon: 'fas fa-exclamation-circle', color: '#f56c6c' },
+            { label: '今日操作', value: '--', icon: 'fas fa-clipboard-list', color: '#e6a23c' }
+        ]);
+
+        const getHeaders = () => ({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
         });
 
-        const showMessage = (text, type = 'success') => {
-            message.value = { text, type };
-            setTimeout(() => message.value = null, 3000);
+        const getOpTagType = (type) => {
+            const map = { '启动': 'success', '停止': 'danger', '维护': 'warning', '校准': 'info' };
+            return map[type] || '';
         };
 
-        const loadStats = async () => {
-            loading.value = true;
+        const loadOverview = async () => {
             try {
-                const [devStats, envSummary] = await Promise.all([
-                    statisticsApi.getDeviceSummary().catch(() => null),
-                    statisticsApi.getEnvironmentSummary().catch(() => null)
-                ]);
-
-                if (devStats) {
-                    deviceStats.value = {
-                        total: devStats.deviceTotal || 0,
-                        online: devStats.deviceOnline || 0,
-                        running: devStats.deviceRunning || 0,
-                        fault: devStats.deviceFault || 0,
-                        todayOperations: devStats.todayOperations || 0
-                    };
+                const res = await fetch(API_BASE_URL + '/api/statistics/overview', { headers: getHeaders() });
+                const data = await res.json();
+                if (data.code === 200 && data.data) {
+                    const d = data.data;
+                    overviewStats.value[0].value = d.deviceTotal || 0;
+                    overviewStats.value[1].value = d.deviceRunning || 0;
+                    overviewStats.value[2].value = d.deviceFault || 0;
+                    overviewStats.value[3].value = d.todayOperations || 0;
                 }
-
-                if (envSummary) {
-                    envStats.value = {
-                        avgTemperature: envSummary.avgAirTemperature || 0,
-                        avgHumidity: envSummary.avgAirHumidity || 0,
-                        avgSoilHumidity: envSummary.avgSoilHumidity || 0,
-                        avgLight: envSummary.avgLightIntensity || 0,
-                        maxPest: envSummary.maxPestCount || 0
-                    };
-                }
-            } catch (error) {
-                console.error('Load stats failed:', error);
-            } finally {
-                loading.value = false;
+            } catch (e) {
+                console.error(e);
             }
         };
 
-        const predictYield = async () => {
-            if (!yieldForm.cropName || !yieldForm.baseYield) {
-                showMessage('请填写作物名称和基础产量', 'error');
-                return;
-            }
-
+        const loadLogs = async () => {
             try {
-                const result = await statisticsApi.predictYield(yieldForm);
-                yieldResult.value = result;
-                showMessage('产量预测计算完成');
-            } catch (error) {
-                showMessage('预测失败: ' + error.message, 'error');
+                let url = API_BASE_URL + '/api/statistics/logs?page=' + (currentPage.value - 1) + '&size=' + pageSize;
+                if (queryDeviceCode.value) url += '&deviceCode=' + queryDeviceCode.value;
+                const res = await fetch(url, { headers: getHeaders() });
+                const data = await res.json();
+                if (data.code === 200) {
+                    logs.value = data.data.content || [];
+                    total.value = data.data.totalElements || 0;
+                }
+            } catch (e) {
+                console.error(e);
             }
         };
 
-        Vue.onMounted(() => {
-            loadStats();
+        const initCharts = () => {
+            if (barRef.value) {
+                const bar = echarts.init(barRef.value);
+                bar.setOption({
+                    tooltip: { trigger: 'axis' },
+                    xAxis: { type: 'category', data: ['启动', '停止', '维护', '校准', '故障标记'] },
+                    yAxis: { type: 'value' },
+                    series: [{
+                        type: 'bar',
+                        data: [12, 8, 5, 3, 2],
+                        itemStyle: { color: '#409eff', borderRadius: [4, 4, 0, 0] }
+                    }]
+                });
+                window.addEventListener('resize', () => bar.resize());
+            }
+            if (radarRef.value) {
+                const radar = echarts.init(radarRef.value);
+                radar.setOption({
+                    tooltip: {},
+                    radar: {
+                        indicator: [
+                            { name: '土壤湿度', max: 100 },
+                            { name: '空气温度', max: 50 },
+                            { name: '空气湿度', max: 100 },
+                            { name: '光照强度', max: 100 },
+                            { name: 'CO₂', max: 2000 }
+                        ]
+                    },
+                    series: [{
+                        type: 'radar',
+                        data: [{
+                            value: [65, 28, 62, 75, 450],
+                            name: '当前环境',
+                            areaStyle: { color: 'rgba(64, 158, 255, 0.2)' },
+                            lineStyle: { color: '#409eff' }
+                        }]
+                    }]
+                });
+                window.addEventListener('resize', () => radar.resize());
+            }
+        };
+
+        Vue.onMounted(async () => {
+            await loadOverview();
+            await loadLogs();
+            Vue.nextTick(() => initCharts());
         });
 
-        return {
-            deviceStats,
-            envStats,
-            loading,
-            message,
-            yieldForm,
-            yieldResult,
-            predictYield
-        };
+        return { overviewStats, barRef, radarRef, logs, queryDeviceCode, currentPage, pageSize, total, loadLogs, getOpTagType };
     }
 };

@@ -1,238 +1,159 @@
 const EnvironmentData = {
     template: `
-        <div class="space-y-6">
-            <!-- 操作栏 -->
-            <div class="bg-white rounded-lg shadow-md p-4 flex justify-between items-center">
-                <h3 class="text-lg font-semibold text-gray-800">
-                    <i class="fas fa-leaf mr-2 text-green-500"></i>环境监测
-                </h3>
-                <div class="space-x-2">
-                    <button @click="collectData"
-                        class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors">
-                        <i class="fas fa-download mr-2"></i>采集数据
-                    </button>
-                    <button @click="collectAndControl"
-                        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
-                        <i class="fas fa-robot mr-2"></i>采集并自动控制
-                    </button>
-                </div>
-            </div>
-
-            <!-- 最新数据卡片 -->
-            <div v-if="latestData" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-temperature-high text-red-500 text-xl"></i>
+        <div>
+            <!-- 当前环境数据 -->
+            <el-row :gutter="20" style="margin-bottom: 20px;">
+                <el-col :span="6" v-for="item in currentData" :key="item.label">
+                    <el-card shadow="hover" :body-style="{ padding: '20px' }">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 24px; font-weight: bold;" :style="{ color: item.color }">{{ item.value }}</div>
+                                <div style="font-size: 13px; color: #909399; margin-top: 5px;">{{ item.label }}</div>
+                            </div>
+                            <i :class="item.icon" style="font-size: 30px; opacity: 0.6;" :style="{ color: item.color }"></i>
                         </div>
-                        <span class="text-sm text-gray-400">空气温度</span>
-                    </div>
-                    <p class="text-3xl font-bold text-red-500">{{ latestData.airTemperature }}°C</p>
-                    <p class="text-sm text-gray-400 mt-2">
-                        <i class="fas fa-clock mr-1"></i>{{ formatTime(latestData.collectTime) }}
-                    </p>
-                </div>
-
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-tint text-blue-500 text-xl"></i>
+                        <div style="margin-top: 10px;">
+                            <el-progress :percentage="item.percent" :color="item.color" :show-text="false" :stroke-width="4"></el-progress>
                         </div>
-                        <span class="text-sm text-gray-400">空气湿度</span>
-                    </div>
-                    <p class="text-3xl font-bold text-blue-500">{{ latestData.airHumidity }}%</p>
-                    <p class="text-sm text-gray-400 mt-2">
-                        <i class="fas fa-clock mr-1"></i>{{ formatTime(latestData.collectTime) }}
-                    </p>
-                </div>
+                    </el-card>
+                </el-col>
+            </el-row>
 
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-seedling text-green-500 text-xl"></i>
-                        </div>
-                        <span class="text-sm text-gray-400">土壤湿度</span>
-                    </div>
-                    <p class="text-3xl font-bold text-green-500">{{ latestData.soilHumidity }}%</p>
-                    <p class="text-sm text-gray-400 mt-2">
-                        <i class="fas fa-clock mr-1"></i>{{ formatTime(latestData.collectTime) }}
-                    </p>
+            <!-- 查询和操作 -->
+            <el-card shadow="hover" style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <el-form :inline="true" :model="queryForm">
+                        <el-form-item label="时间范围">
+                            <el-date-picker v-model="queryForm.dateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" size="default" style="width: 300px;"></el-date-picker>
+                        </el-form-item>
+                        <el-form-item>
+                            <el-button type="primary" @click="loadHistory"><i class="fas fa-search" style="margin-right: 6px;"></i>查询</el-button>
+                        </el-form-item>
+                    </el-form>
+                    <el-button type="success" @click="collectData"><i class="fas fa-database" style="margin-right: 6px;"></i>采集数据</el-button>
                 </div>
-
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-sun text-yellow-500 text-xl"></i>
-                        </div>
-                        <span class="text-sm text-gray-400">光照强度</span>
-                    </div>
-                    <p class="text-3xl font-bold text-yellow-500">{{ latestData.lightIntensity }} lux</p>
-                    <p class="text-sm text-gray-400 mt-2">
-                        <i class="fas fa-clock mr-1"></i>{{ formatTime(latestData.collectTime) }}
-                    </p>
-                </div>
-
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-wind text-purple-500 text-xl"></i>
-                        </div>
-                        <span class="text-sm text-gray-400">CO₂ 浓度</span>
-                    </div>
-                    <p class="text-3xl font-bold text-purple-500">{{ latestData.co2Concentration }} ppm</p>
-                    <p class="text-sm text-gray-400 mt-2">
-                        <i class="fas fa-clock mr-1"></i>{{ formatTime(latestData.collectTime) }}
-                    </p>
-                </div>
-
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-bug text-orange-500 text-xl"></i>
-                        </div>
-                        <span class="text-sm text-gray-400">虫情指数</span>
-                    </div>
-                    <p class="text-3xl font-bold" :class="latestData.pestCount > 10 ? 'text-red-500' : 'text-green-500'">
-                        {{ latestData.pestCount }}
-                    </p>
-                    <p class="text-sm text-gray-400 mt-2">
-                        <i class="fas fa-clock mr-1"></i>{{ formatTime(latestData.collectTime) }}
-                    </p>
-                </div>
-            </div>
-
-            <!-- 空状态 -->
-            <div v-if="!loading && !latestData"
-                class="bg-white rounded-lg shadow-md p-12 text-center">
-                <i class="fas fa-cloud-sun text-6xl text-gray-300 mb-4"></i>
-                <p class="text-gray-500 text-lg">暂无环境数据</p>
-                <p class="text-gray-400 text-sm mt-2">请点击"采集数据"按钮获取环境信息</p>
-            </div>
+            </el-card>
 
             <!-- 历史数据表格 -->
-            <div v-if="historyData.length > 0" class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="p-4 border-b">
-                    <h4 class="font-semibold text-gray-800">
-                        <i class="fas fa-history mr-2 text-gray-500"></i>历史数据
-                    </h4>
+            <el-card shadow="hover">
+                <template #header>
+                    <span style="font-weight: bold;">历史环境数据</span>
+                </template>
+                <el-table :data="historyData" stripe border style="width: 100%;">
+                    <el-table-column prop="id" label="ID" width="70"></el-table-column>
+                    <el-table-column prop="recordTime" label="记录时间" width="180"></el-table-column>
+                    <el-table-column prop="soilHumidity" label="土壤湿度(%)" width="120">
+                        <template #default="{ row }">
+                            <span :style="{ color: row.soilHumidity < 30 ? '#f56c6c' : row.soilHumidity > 80 ? '#e6a23c' : '#67c23a' }">{{ row.soilHumidity?.toFixed(1) }}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="airTemperature" label="空气温度(°C)" width="120">
+                        <template #default="{ row }">
+                            <span :style="{ color: row.airTemperature > 35 ? '#f56c6c' : row.airTemperature < 5 ? '#409eff' : '#67c23a' }">{{ row.airTemperature?.toFixed(1) }}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="airHumidity" label="空气湿度(%)" width="120">
+                        <template #default="{ row }">{{ row.airHumidity?.toFixed(1) }}</template>
+                    </el-table-column>
+                    <el-table-column prop="lightIntensity" label="光照强度(lux)" width="130">
+                        <template #default="{ row }">{{ row.lightIntensity?.toFixed(0) }}</template>
+                    </el-table-column>
+                    <el-table-column prop="co2" label="CO₂浓度(ppm)" width="130">
+                        <template #default="{ row }">
+                            <span :style="{ color: row.co2 > 1000 ? '#f56c6c' : '#67c23a' }">{{ row.co2?.toFixed(0) }}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="soilTemperature" label="土壤温度(°C)" width="120">
+                        <template #default="{ row }">{{ row.soilTemperature?.toFixed(1) }}</template>
+                    </el-table-column>
+                </el-table>
+                <div style="margin-top: 15px; text-align: right;">
+                    <el-pagination
+                        v-model:current-page="currentPage"
+                        :page-size="pageSize"
+                        :total="total"
+                        layout="total, prev, pager, next"
+                        @current-change="loadHistory">
+                    </el-pagination>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">采集时间</th>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">温度(°C)</th>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">空气湿度(%)</th>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">土壤湿度(%)</th>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">光照(lux)</th>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">CO₂(ppm)</th>
-                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">虫情</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y">
-                            <tr v-for="record in historyData.slice(0, 10)" :key="record.id"
-                                class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-sm text-gray-600">{{ formatTime(record.collectTime) }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-800">{{ record.airTemperature }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-800">{{ record.airHumidity }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-800">{{ record.soilHumidity }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-800">{{ record.lightIntensity }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-800">{{ record.co2Concentration }}</td>
-                                <td class="px-4 py-3 text-sm" :class="record.pestCount > 10 ? 'text-red-500' : 'text-green-500'">
-                                    {{ record.pestCount }}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- 加载状态 -->
-            <div v-if="loading" class="text-center py-12">
-                <i class="fas fa-spinner fa-spin text-4xl text-green-500"></i>
-                <p class="text-gray-500 mt-4">采集中...</p>
-            </div>
-
-            <!-- 消息提示 -->
-            <div v-if="message" class="fixed bottom-4 right-4 p-4 rounded-lg shadow-lg"
-                :class="message.type === 'success' ? 'bg-green-500' : 'bg-red-500'">
-                <div class="flex items-center text-white">
-                    <i :class="message.type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"
-                        class="mr-2"></i>
-                    <span>{{ message.text }}</span>
-                </div>
-            </div>
+            </el-card>
         </div>
     `,
 
     setup() {
-        const latestData = Vue.ref(null);
+        const API_BASE_URL = 'http://localhost:8080';
         const historyData = Vue.ref([]);
-        const loading = Vue.ref(false);
-        const message = Vue.ref(null);
+        const queryForm = Vue.reactive({ dateRange: null });
+        const currentPage = Vue.ref(1);
+        const pageSize = 10;
+        const total = Vue.ref(0);
 
-        const showMessage = (text, type = 'success') => {
-            message.value = { text, type };
-            setTimeout(() => message.value = null, 3000);
-        };
+        const currentData = Vue.ref([
+            { label: '土壤湿度', value: '--', icon: 'fas fa-tint', color: '#409eff', percent: 0 },
+            { label: '空气温度', value: '--', icon: 'fas fa-thermometer-half', color: '#f56c6c', percent: 0 },
+            { label: '光照强度', value: '--', icon: 'fas fa-sun', color: '#e6a23c', percent: 0 },
+            { label: 'CO₂浓度', value: '--', icon: 'fas fa-wind', color: '#67c23a', percent: 0 }
+        ]);
 
-        const formatTime = (time) => {
-            if (!time) return '-';
-            const date = new Date(time);
-            return date.toLocaleString('zh-CN');
-        };
+        const getHeaders = () => ({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        });
 
-        const loadData = async () => {
+        const loadCurrent = async () => {
             try {
-                const [latest, list] = await Promise.all([
-                    environmentApi.getLatest().catch(() => null),
-                    environmentApi.getList().catch(() => [])
-                ]);
-                latestData.value = latest;
-                historyData.value = list || [];
-            } catch (error) {
-                console.error('Load environment data failed:', error);
+                const res = await fetch(API_BASE_URL + '/api/environment/latest', { headers: getHeaders() });
+                const data = await res.json();
+                if (data.code === 200 && data.data) {
+                    const d = data.data;
+                    currentData.value[0].value = (d.soilHumidity || 0).toFixed(1) + '%';
+                    currentData.value[0].percent = Math.min(100, d.soilHumidity || 0);
+                    currentData.value[1].value = (d.airTemperature || 0).toFixed(1) + '°C';
+                    currentData.value[1].percent = Math.min(100, (d.airTemperature || 0) / 50 * 100);
+                    currentData.value[2].value = (d.lightIntensity || 0).toFixed(0) + ' lux';
+                    currentData.value[2].percent = Math.min(100, (d.lightIntensity || 0) / 10000 * 100);
+                    currentData.value[3].value = (d.co2 || 0).toFixed(0) + ' ppm';
+                    currentData.value[3].percent = Math.min(100, (d.co2 || 0) / 2000 * 100);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        };
+
+        const loadHistory = async () => {
+            try {
+                const res = await fetch(API_BASE_URL + '/api/environment/history?page=' + (currentPage.value - 1) + '&size=' + pageSize, { headers: getHeaders() });
+                const data = await res.json();
+                if (data.code === 200) {
+                    historyData.value = data.data.content || [];
+                    total.value = data.data.totalElements || 0;
+                }
+            } catch (e) {
+                console.error(e);
             }
         };
 
         const collectData = async () => {
-            loading.value = true;
             try {
-                await environmentApi.collect();
-                showMessage('环境数据采集成功');
-                loadData();
-            } catch (error) {
-                showMessage('数据采集失败: ' + error.message, 'error');
-            } finally {
-                loading.value = false;
-            }
-        };
-
-        const collectAndControl = async () => {
-            loading.value = true;
-            try {
-                const result = await environmentApi.collectAndControl();
-                showMessage('数据采集成功，已触发自动控制');
-                loadData();
-            } catch (error) {
-                showMessage('采集失败: ' + error.message, 'error');
-            } finally {
-                loading.value = false;
+                const res = await fetch(API_BASE_URL + '/api/environment/collect-and-control', {
+                    method: 'POST', headers: getHeaders()
+                });
+                const data = await res.json();
+                if (data.code === 200) {
+                    ElementPlus.ElMessage.success('数据采集成功');
+                    loadCurrent();
+                    loadHistory();
+                }
+            } catch (e) {
+                ElementPlus.ElMessage.error('采集失败');
             }
         };
 
         Vue.onMounted(() => {
-            loadData();
+            loadCurrent();
+            loadHistory();
         });
 
-        return {
-            latestData,
-            historyData,
-            loading,
-            message,
-            formatTime,
-            collectData,
-            collectAndControl
-        };
+        return { currentData, historyData, queryForm, currentPage, pageSize, total, loadHistory, collectData };
     }
 };
