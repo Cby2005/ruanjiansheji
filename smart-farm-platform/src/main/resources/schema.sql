@@ -199,3 +199,19 @@ INSERT INTO `user` (`username`, `password`, `role`) VALUES
 ('tech', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', 'TECHNICIAN'),
 ('operator', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', 'OPERATOR'),
 ('viewer', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', 'VIEWER');
+
+CREATE TABLE IF NOT EXISTS weather_record (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    farm_id BIGINT,
+    latitude DECIMAL(10, 6),
+    longitude DECIMAL(10, 6),
+    record_time DATETIME,
+    temperature DOUBLE,
+    humidity DOUBLE,
+    precipitation DOUBLE,
+    wind_speed DOUBLE,
+    soil_temperature DOUBLE,
+    soil_moisture DOUBLE,
+    source VARCHAR(50),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

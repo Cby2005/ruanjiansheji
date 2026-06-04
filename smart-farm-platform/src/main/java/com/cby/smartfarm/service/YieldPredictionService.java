@@ -4,6 +4,9 @@ import com.cby.smartfarm.entity.YieldPrediction;
 import com.cby.smartfarm.repository.YieldPredictionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,5 +43,10 @@ public class YieldPredictionService {
         log.info("产量预测: 作物{}, 基础产量{}kg, 环境{}, 农事{}, 设备{}, 预测产量{}kg",
                 cropName, baseYield, envScore, taskScore, deviceScore, predictedYield);
         return saved;
+    }
+
+    public Page<YieldPrediction> getHistory(int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        return yieldPredictionRepository.findAll(pageRequest);
     }
 }

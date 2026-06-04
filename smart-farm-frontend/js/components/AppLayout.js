@@ -32,9 +32,21 @@ const AppLayout = {
                                     <i class="fas fa-leaf" style="margin-right: 10px; width: 20px; text-align: center;"></i>
                                     <template #title>环境监测</template>
                                 </el-menu-item>
-                                <el-menu-item index="/ai-assistant">
+                                <el-menu-item index="/ai-assistant" v-if="hasPermission('TECHNICIAN')">
                                     <i class="fas fa-robot" style="margin-right: 10px; width: 20px; text-align: center;"></i>
                                     <template #title>Agent决策中心</template>
+                                </el-menu-item>
+                                <el-menu-item index="/knowledge-graph" v-if="hasPermission('TECHNICIAN')">
+                                    <i class="fas fa-project-diagram" style="margin-right: 10px; width: 20px; text-align: center;"></i>
+                                    <template #title>知识图谱RAG</template>
+                                </el-menu-item>
+                                <el-menu-item index="/agri-knowledge">
+                                    <i class="fas fa-cloud-sun-rain" style="margin-right: 10px; width: 20px; text-align: center;"></i>
+                                    <template #title>农业知识决策</template>
+                                </el-menu-item>
+                                <el-menu-item index="/project-division">
+                                    <i class="fas fa-clipboard-check" style="margin-right: 10px; width: 20px; text-align: center;"></i>
+                                    <template #title>分工功能看板</template>
                                 </el-menu-item>
                                 <el-menu-item index="/devices">
                                     <i class="fas fa-cogs" style="margin-right: 10px; width: 20px; text-align: center;"></i>
@@ -51,6 +63,10 @@ const AppLayout = {
                                 <el-menu-item index="/statistics">
                                     <i class="fas fa-chart-bar" style="margin-right: 10px; width: 20px; text-align: center;"></i>
                                     <template #title>统计分析</template>
+                                </el-menu-item>
+                                <el-menu-item index="/yield-prediction" v-if="hasPermission('TECHNICIAN')">
+                                    <i class="fas fa-chart-line" style="margin-right: 10px; width: 20px; text-align: center;"></i>
+                                    <template #title>产量预测</template>
                                 </el-menu-item>
                                 <el-sub-menu index="system" v-if="hasPermission('ADMIN')">
                                     <template #title>
@@ -146,10 +162,14 @@ const AppLayout = {
             { path: '/', name: '首页大屏' },
             { path: '/environment', name: '环境监测' },
             { path: '/ai-assistant', name: 'Agent决策中心' },
+            { path: '/knowledge-graph', name: '知识图谱RAG' },
+            { path: '/agri-knowledge', name: '农业知识决策' },
+            { path: '/project-division', name: '分工功能看板' },
             { path: '/devices', name: '智能设备控制' },
             { path: '/tasks', name: '农事任务管理' },
             { path: '/alerts', name: '预警中心' },
             { path: '/statistics', name: '统计分析' },
+            { path: '/yield-prediction', name: '产量预测' },
             { path: '/users', name: '用户管理' }
         ];
 

@@ -45,6 +45,14 @@ public class StatisticsController {
         return Result.success(prediction);
     }
 
+    @GetMapping("/yield-predict/history")
+    @Operation(summary = "获取产量预测历史记录")
+    public Result<?> yieldPredictHistory(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return Result.success(yieldPredictionService.getHistory(page, size));
+    }
+
     /**
      * 环境统计：平均土壤湿度、平均空气温度、平均光照强度、平均CO₂、虫情最大值
      */

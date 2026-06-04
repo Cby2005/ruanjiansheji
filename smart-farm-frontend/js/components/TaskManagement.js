@@ -17,7 +17,7 @@ const TaskManagement = {
                                 <el-button type="primary" @click="loadTasks"><i class="fas fa-search" style="margin-right: 6px;"></i>查询</el-button>
                             </el-form-item>
                         </el-form>
-                        <el-button type="success" @click="showDialog = true; resetForm();">
+                        <el-button v-if="canCreateTask" type="success" @click="showDialog = true; resetForm();">
                             <i class="fas fa-plus" style="margin-right: 6px;"></i>新增任务
                         </el-button>
                     </div>
@@ -45,18 +45,19 @@ const TaskManagement = {
                     </el-table-column>
                     <el-table-column label="操作" width="250" fixed="right">
                         <template #default="{ row }">
-                            <el-button v-if="row.status === 'TODO'" type="success" size="small" link @click="startTask(row)">
+                            <el-button v-if="row.status === 'TODO' && canExecuteTask" type="success" size="small" link @click="startTask(row)">
                                 <i class="fas fa-play" style="margin-right: 4px;"></i>开始
                             </el-button>
-                            <el-button v-if="row.status === 'DOING'" type="primary" size="small" link @click="completeTask(row)">
+                            <el-button v-if="row.status === 'DOING' && canExecuteTask" type="primary" size="small" link @click="completeTask(row)">
                                 <i class="fas fa-check" style="margin-right: 4px;"></i>完成
                             </el-button>
-                            <el-button v-if="row.status !== 'DONE' && row.status !== 'CANCELLED'" type="warning" size="small" link @click="cancelTask(row)">
+                            <el-button v-if="row.status !== 'DONE' && row.status !== 'CANCELLED' && canCancelTask" type="warning" size="small" link @click="cancelTask(row)">
                                 <i class="fas fa-times" style="margin-right: 4px;"></i>取消
                             </el-button>
-                            <el-button type="danger" size="small" link @click="confirmDelete(row)">
+                            <el-button v-if="canDeleteTask" type="danger" size="small" link @click="confirmDelete(row)">
                                 <i class="fas fa-trash" style="margin-right: 4px;"></i>删除
                             </el-button>
+                            <span v-if="!canExecuteTask && !canDeleteTask" style="color: #909399; font-size: 12px;">只读</span>
                         </template>
                     </el-table-column>
                 </el-table>
@@ -111,6 +112,15 @@ const TaskManagement = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + localStorage.getItem('token')
         });
+
+        const userRole = Vue.computed(() => {
+            try { return JSON.parse(localStorage.getItem('user') || '{}').role || 'VIEWER'; } catch { return 'VIEWER'; }
+        });
+        // ADMIN/TECHNICIAN：全部操作；OPERATOR：仅开始/完成；VIEWER：只读
+        const canCreateTask = Vue.computed(() => ['ADMIN', 'TECHNICIAN'].includes(userRole.value));
+        const canExecuteTask = Vue.computed(() => ['ADMIN', 'TECHNICIAN', 'OPERATOR'].includes(userRole.value));
+        const canCancelTask = Vue.computed(() => ['ADMIN', 'TECHNICIAN'].includes(userRole.value));
+        const canDeleteTask = Vue.computed(() => ['ADMIN', 'TECHNICIAN'].includes(userRole.value));
 
         const getStatusText = (status) => {
             const map = { 'TODO': '待办', 'DOING': '进行中', 'DONE': '已完成', 'CANCELLED': '已取消' };
@@ -215,7 +225,8 @@ const TaskManagement = {
         return {
             tasks, filteredTasks, loading, saving, showDialog, queryForm, taskForm,
             getStatusText, getStatusType, loadTasks, addTask,
-            startTask, completeTask, cancelTask, confirmDelete, resetForm
+            startTask, completeTask, cancelTask, confirmDelete, resetForm,
+            canCreateTask, canExecuteTask, canCancelTask, canDeleteTask
         };
     }
 };

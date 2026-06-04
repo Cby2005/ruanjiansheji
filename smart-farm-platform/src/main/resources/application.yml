@@ -28,8 +28,18 @@ springdoc:
 mimo:
   api:
     key: ${MIMO_API_KEY:}
-    base-url: ${MIMO_BASE_URL:https://api.xiaomimimo.com/v1}
+    base-url: ${MIMO_BASE_URL:https://token-plan-cn.xiaomimimo.com/v1}
   model: ${MIMO_MODEL:mimo-v2.5-pro}
+
+open-meteo:
+  forecast-url: ${OPEN_METEO_FORECAST_URL:https://api.open-meteo.com/v1/forecast}
+  archive-url: ${OPEN_METEO_ARCHIVE_URL:https://archive-api.open-meteo.com/v1/archive}
+  timezone: ${OPEN_METEO_TIMEZONE:Asia/Shanghai}
+
+farm:
+  default:
+    latitude: ${FARM_DEFAULT_LATITUDE:39.9042}
+    longitude: ${FARM_DEFAULT_LONGITUDE:116.4074}
 
 logging:
   level:

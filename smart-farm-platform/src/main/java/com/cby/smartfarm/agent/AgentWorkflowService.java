@@ -2,12 +2,14 @@ package com.cby.smartfarm.agent;
 
 import com.cby.smartfarm.agent.dto.*;
 import com.cby.smartfarm.dto.EnvironmentDataDTO;
+import com.cby.smartfarm.dto.KnowledgeGraphResult;
 import com.cby.smartfarm.entity.AgentDecisionLog;
 import com.cby.smartfarm.entity.AlertRecord;
 import com.cby.smartfarm.entity.EnvironmentRecord;
 import com.cby.smartfarm.repository.AgentDecisionLogRepository;
 import com.cby.smartfarm.service.DeviceService;
 import com.cby.smartfarm.service.EnvironmentService;
+import com.cby.smartfarm.service.KnowledgeGraphService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class AgentWorkflowService {
     private final EnvironmentService environmentService;
     private final AgricultureDecisionService agricultureDecisionService;
     private final DeviceService deviceService;
+    private final KnowledgeGraphService knowledgeGraphService;
     private final AgentDecisionLogRepository logRepository;
     private final ObjectMapper objectMapper;
 
@@ -41,7 +44,14 @@ public class AgentWorkflowService {
         List<AlertRecord> alerts = (List<AlertRecord>) collectionResult.getOrDefault("alerts", List.of());
 
         AgentDecisionRequest decisionRequest = normalizeRequest(request, record);
+        KnowledgeGraphResult knowledgeGraph = knowledgeGraphService.retrieveForDecision(decisionRequest);
         AgentDecisionPlan plan = agricultureDecisionService.decide(decisionRequest);
+        plan.setKnowledgeEvidence(knowledgeGraph.getRagContext());
+        saveLog(workflowId, "知识图谱 RAG Agent", "KNOWLEDGE_RETRIEVAL", "LOW",
+                knowledgeGraph.getQuery(), "检索到 " + knowledgeGraph.getNodes().size()
+                        + " 个实体、" + knowledgeGraph.getLinks().size()
+                        + " 条关系、" + knowledgeGraph.getChunks().size() + " 个文本片段",
+                true, knowledgeGraph);
         saveExpertLogs(workflowId, plan, record);
 
         List<AgentControlCommand> commands = generateCommands(plan);
@@ -71,6 +81,7 @@ public class AgentWorkflowService {
         result.setCommands(commands);
         result.setSafetyReview(review);
         result.setExecutionResults(executionResults);
+        result.setKnowledgeGraph(knowledgeGraph);
         result.setDecisionLogs(logRepository.findByWorkflowIdOrderByCreateTimeAsc(workflowId));
         return result;
     }

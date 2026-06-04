@@ -48,24 +48,25 @@ const DeviceList = {
                         </div>
                         <el-divider style="margin: 10px 0;"></el-divider>
                         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                            <el-button v-if="device.state === 'STANDBY'" type="success" size="small" @click="startDevice(device)">
+                            <el-button v-if="device.state === 'STANDBY' && canStart" type="success" size="small" @click="startDevice(device)">
                                 <i class="fas fa-play" style="margin-right: 4px;"></i>启动
                             </el-button>
-                            <el-button v-if="device.state === 'RUNNING'" type="danger" size="small" @click="confirmStop(device)">
+                            <el-button v-if="device.state === 'RUNNING' && canStop" type="danger" size="small" @click="confirmStop(device)">
                                 <i class="fas fa-stop" style="margin-right: 4px;"></i>停止
                             </el-button>
-                            <el-button v-if="device.state === 'FAULT' || device.state === 'STANDBY'" type="warning" size="small" @click="maintainDevice(device)">
+                            <el-button v-if="(device.state === 'FAULT' || device.state === 'STANDBY') && canMaintain" type="warning" size="small" @click="maintainDevice(device)">
                                 <i class="fas fa-wrench" style="margin-right: 4px;"></i>维护
                             </el-button>
-                            <el-button v-if="device.state === 'RUNNING'" type="info" size="small" @click="confirmFault(device)">
+                            <el-button v-if="device.state === 'RUNNING' && canFault" type="info" size="small" @click="confirmFault(device)">
                                 <i class="fas fa-exclamation-triangle" style="margin-right: 4px;"></i>标记故障
                             </el-button>
-                            <el-button v-if="device.state === 'MAINTENANCE'" type="success" size="small" @click="startDevice(device)">
+                            <el-button v-if="device.state === 'MAINTENANCE' && canMaintain" type="success" size="small" @click="startDevice(device)">
                                 <i class="fas fa-check" style="margin-right: 4px;"></i>完成维护
                             </el-button>
-                            <el-button v-if="device.state === 'STANDBY'" type="primary" size="small" plain @click="calibrateDevice(device)">
+                            <el-button v-if="device.state === 'STANDBY' && canCalibrate" type="primary" size="small" plain @click="calibrateDevice(device)">
                                 <i class="fas fa-ruler" style="margin-right: 4px;"></i>校准
                             </el-button>
+                            <span v-if="!canStart && !canMaintain" style="color: #909399; font-size: 12px; line-height: 32px;">当前角色无设备控制权限</span>
                         </div>
                     </el-card>
                 </el-col>
@@ -97,6 +98,17 @@ const DeviceList = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + localStorage.getItem('token')
         });
+
+        const userRole = Vue.computed(() => {
+            try { return JSON.parse(localStorage.getItem('user') || '{}').role || 'VIEWER'; } catch { return 'VIEWER'; }
+        });
+
+        // 操作权限判断：ADMIN全部，TECHNICIAN可启停维护校准，OPERATOR仅启停，VIEWER只读
+        const canStart = Vue.computed(() => ['ADMIN', 'TECHNICIAN', 'OPERATOR'].includes(userRole.value));
+        const canStop = Vue.computed(() => ['ADMIN', 'TECHNICIAN', 'OPERATOR'].includes(userRole.value));
+        const canMaintain = Vue.computed(() => ['ADMIN', 'TECHNICIAN'].includes(userRole.value));
+        const canFault = Vue.computed(() => ['ADMIN', 'TECHNICIAN'].includes(userRole.value));
+        const canCalibrate = Vue.computed(() => ['ADMIN', 'TECHNICIAN'].includes(userRole.value));
 
         const loadDevices = async () => {
             try {
@@ -204,7 +216,8 @@ const DeviceList = {
         return {
             devices, queryForm, filteredDevices, getStatusText,
             loadDevices, startDevice, confirmStop, confirmFault,
-            maintainDevice, calibrateDevice
+            maintainDevice, calibrateDevice,
+            canStart, canStop, canMaintain, canFault, canCalibrate
         };
     }
 };

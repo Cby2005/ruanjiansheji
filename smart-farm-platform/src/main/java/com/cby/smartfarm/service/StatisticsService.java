@@ -133,8 +133,8 @@ public class StatisticsService {
         List<DeviceOperationLog> logs = deviceOperationLogRepository.findAll();
         Map<String, Object> summary = new LinkedHashMap<>();
         Map<String, Long> byType = logs.stream()
-                .filter(l -> l.getOperationType() != null)
-                .collect(Collectors.groupingBy(DeviceOperationLog::getOperationType, Collectors.counting()));
+                .filter(l -> l.getAction() != null)
+                .collect(Collectors.groupingBy(DeviceOperationLog::getAction, Collectors.counting()));
         summary.putAll(byType);
         return summary;
     }

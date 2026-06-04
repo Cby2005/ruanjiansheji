@@ -43,4 +43,7 @@ public class AgentDecisionPlan {
 
     @Schema(description = "后续监测指标")
     private List<String> followUpMetrics = new ArrayList<>();
+
+    @Schema(description = "知识图谱 RAG 决策依据")
+    private List<String> knowledgeEvidence = new ArrayList<>();
 }

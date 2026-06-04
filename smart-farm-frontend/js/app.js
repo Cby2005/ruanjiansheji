@@ -44,18 +44,23 @@ const authStore = {
     }
 };
 
-// 路由配置
+// 权限配置：ADMIN > TECHNICIAN > OPERATOR > VIEWER
+// hasPermission 采用层级比较，requiredRole 表示"最低需要的角色"
 const routes = [
     { path: '/login', component: Login, meta: { requiresAuth: false } },
-    { path: '/', component: Dashboard, meta: { requiresAuth: true } },
-    { path: '/devices', component: DeviceList, meta: { requiresAuth: true } },
-    { path: '/environment', component: EnvironmentData, meta: { requiresAuth: true } },
-    { path: '/statistics', component: Statistics, meta: { requiresAuth: true } },
-    { path: '/users', component: UserManagement, meta: { requiresAuth: true, requiredRole: 'ADMIN' } },
-    { path: '/ai-assistant', component: AIAssistant, meta: { requiresAuth: true } },
-    { path: '/profile', component: UserProfile, meta: { requiresAuth: true } },
-    { path: '/tasks', component: TaskManagement, meta: { requiresAuth: true } },
-    { path: '/alerts', component: AlertCenter, meta: { requiresAuth: true } }
+    { path: '/', component: Dashboard, meta: { requiresAuth: true } },                                              // 所有角色
+    { path: '/devices', component: DeviceList, meta: { requiresAuth: true } },                                       // 所有角色（操作权限在页面内控制）
+    { path: '/environment', component: EnvironmentData, meta: { requiresAuth: true } },                               // 所有角色
+    { path: '/statistics', component: Statistics, meta: { requiresAuth: true } },                                     // 所有角色
+    { path: '/users', component: UserManagement, meta: { requiresAuth: true, requiredRole: 'ADMIN' } },                // 仅管理员
+    { path: '/ai-assistant', component: AIAssistant, meta: { requiresAuth: true, requiredRole: 'TECHNICIAN' } },       // 技术员及以上
+    { path: '/knowledge-graph', component: KnowledgeGraph, meta: { requiresAuth: true, requiredRole: 'TECHNICIAN' } }, // 技术员及以上
+    { path: '/agri-knowledge', component: AgriKnowledgeHub, meta: { requiresAuth: true } },                           // 所有角色
+    { path: '/project-division', component: ProjectDivision, meta: { requiresAuth: true } },                          // 所有角色
+    { path: '/profile', component: UserProfile, meta: { requiresAuth: true } },                                       // 所有角色
+    { path: '/tasks', component: TaskManagement, meta: { requiresAuth: true } },                                      // 所有角色（操作权限在页面内控制）
+    { path: '/alerts', component: AlertCenter, meta: { requiresAuth: true } },                                        // 所有角色（操作权限在页面内控制）
+    { path: '/yield-prediction', component: YieldPrediction, meta: { requiresAuth: true, requiredRole: 'TECHNICIAN' } } // 技术员及以上
 ];
 
 const router = VueRouter.createRouter({
@@ -98,6 +103,9 @@ app.component('environment-data', EnvironmentData);
 app.component('statistics', Statistics);
 app.component('user-management', UserManagement);
 app.component('ai-assistant', AIAssistant);
+app.component('knowledge-graph', KnowledgeGraph);
+app.component('agri-knowledge-hub', AgriKnowledgeHub);
+app.component('project-division', ProjectDivision);
 app.component('user-profile', UserProfile);
 app.component('task-management', TaskManagement);
 app.component('alert-center', AlertCenter);

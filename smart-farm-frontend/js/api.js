@@ -1,22 +1,457 @@
-// API 基础配置
-const API_BASE_URL = 'http://localhost:8080';
+// ============================================================
+// API 基础配置 + Mock 数据层
+// 当后端不可用时自动使用 Mock 数据，确保前端可独立运行
+// ============================================================
 
-// 创建 axios 实例
+const API_BASE_URL = 'http://localhost:8080';
+const API_TIMEOUT = 3000; // 超时时间，超过则使用Mock
+
+// ============================================================
+// Mock 数据存储（支持运行时动态修改）
+// ============================================================
+const mockStore = {
+    // 当前登录用户
+    currentUser: null,
+
+    // 用户列表
+    users: [
+        { id: 1, username: 'admin', password: '123456', role: 'ADMIN', createdAt: '2024-01-15 10:00:00' },
+        { id: 2, username: 'tech', password: '123456', role: 'TECHNICIAN', createdAt: '2024-02-20 14:30:00' },
+        { id: 3, username: 'operator', password: '123456', role: 'OPERATOR', createdAt: '2024-03-10 09:15:00' },
+        { id: 4, username: 'viewer', password: '123456', role: 'VIEWER', createdAt: '2024-04-05 16:45:00' }
+    ],
+
+    // 设备列表
+    devices: [
+        { id: 1, deviceCode: 'DEV-IRR-001', deviceName: '智能灌溉阀-A1', deviceType: '灌溉阀', state: 'RUNNING', online: true, area: 'A区-1号温室' },
+        { id: 2, deviceCode: 'DEV-IRR-002', deviceName: '智能灌溉阀-A2', deviceType: '灌溉阀', state: 'STANDBY', online: true, area: 'A区-2号温室' },
+        { id: 3, deviceCode: 'DEV-FAN-001', deviceName: '通风风机-B1', deviceType: '通风风扇', state: 'RUNNING', online: true, area: 'B区-1号温室' },
+        { id: 4, deviceCode: 'DEV-FAN-002', deviceName: '通风风机-B2', deviceType: '通风风扇', state: 'FAULT', online: false, area: 'B区-2号温室' },
+        { id: 5, deviceCode: 'DEV-LIT-001', deviceName: '补光灯-C1', deviceType: '补光灯', state: 'RUNNING', online: true, area: 'C区-育苗区' },
+        { id: 6, deviceCode: 'DEV-LIT-002', deviceName: '补光灯-C2', deviceType: '补光灯', state: 'STANDBY', online: true, area: 'C区-花期区' },
+        { id: 7, deviceCode: 'DEV-ROL-001', deviceName: '电动卷帘-D1', deviceType: '卷帘', state: 'MAINTENANCE', online: true, area: 'D区-果期区' },
+        { id: 8, deviceCode: 'DEV-ROL-002', deviceName: '电动卷帘-D2', deviceType: '卷帘', state: 'STANDBY', online: true, area: 'D区-果期区' },
+        { id: 9, deviceCode: 'DEV-HT-001', deviceName: '加热器-E1', deviceType: '加热器', state: 'STANDBY', online: true, area: 'E区-育苗温室' }
+    ],
+
+    // 环境数据历史
+    environmentHistory: [],
+
+    // 任务列表
+    tasks: [
+        { id: 1, taskName: 'A区1号温室灌溉', taskType: '灌溉', status: 'TODO', assignee: '张三', createTime: '2024-06-01 08:00:00', finishTime: null, remark: '土壤湿度偏低，需及时灌溉' },
+        { id: 2, taskName: 'B区通风检查', taskType: '巡检', status: 'DOING', assignee: '李四', createTime: '2024-06-01 09:30:00', finishTime: null, remark: '检查风机运行状态' },
+        { id: 3, taskName: 'C区育苗补光', taskType: '其他', status: 'DONE', assignee: '王五', createTime: '2024-05-30 14:00:00', finishTime: '2024-05-31 18:00:00', remark: '育苗期补光方案执行' },
+        { id: 4, taskName: 'D区虫害防治', taskType: '除虫', status: 'TODO', assignee: '赵六', createTime: '2024-06-02 07:00:00', finishTime: null, remark: '发现少量蚜虫，需喷洒生物农药' },
+        { id: 5, taskName: '全区施肥作业', taskType: '施肥', status: 'DONE', assignee: '张三', createTime: '2024-05-28 08:00:00', finishTime: '2024-05-29 17:00:00', remark: '有机肥追施' },
+        { id: 6, taskName: '番茄采收', taskType: '采收', status: 'DOING', assignee: '李四', createTime: '2024-06-01 06:00:00', finishTime: null, remark: 'D区番茄成熟，安排采收' }
+    ],
+
+    // 预警列表
+    alerts: [
+        { id: 1, alertLevel: 'CRITICAL', alertType: '温度异常', message: 'B区2号温室温度超过38°C，已触发紧急通风', createTime: '2024-06-02 14:30:00', handled: false },
+        { id: 2, alertLevel: 'WARNING', alertType: '湿度过低', message: 'A区1号温室土壤湿度低于25%，建议启动灌溉', createTime: '2024-06-02 10:15:00', handled: false },
+        { id: 3, alertLevel: 'WARNING', alertType: '设备故障', message: '通风风机-B2运行异常，已自动停机', createTime: '2024-06-02 09:00:00', handled: false },
+        { id: 4, alertLevel: 'INFO', alertType: 'CO₂浓度', message: 'C区育苗区CO₂浓度偏高（1200ppm），建议通风', createTime: '2024-06-02 08:45:00', handled: true },
+        { id: 5, alertLevel: 'CRITICAL', alertType: '虫情预警', message: 'D区发现蚜虫聚集，密度达到预警阈值', createTime: '2024-06-01 16:20:00', handled: false },
+        { id: 6, alertLevel: 'WARNING', alertType: '光照不足', message: 'C区花期区连续3天光照不足，影响开花', createTime: '2024-06-01 11:30:00', handled: true },
+        { id: 7, alertLevel: 'INFO', alertType: '系统通知', message: '灌溉阀-A2已完成校准，状态正常', createTime: '2024-06-01 09:00:00', handled: true }
+    ],
+
+    // 操作日志
+    operationLogs: [
+        { id: 1, deviceCode: 'DEV-IRR-001', operationType: '启动', operator: 'admin', result: '灌溉阀已开启，流量2.5L/min', operationTime: '2024-06-02 14:00:00' },
+        { id: 2, deviceCode: 'DEV-FAN-001', operationType: '启动', operator: 'tech', result: '风机已启动，转速1200rpm', operationTime: '2024-06-02 13:30:00' },
+        { id: 3, deviceCode: 'DEV-FAN-002', operationType: '标记故障', operator: 'tech', result: '设备运行异常，已标记故障', operationTime: '2024-06-02 09:00:00' },
+        { id: 4, deviceCode: 'DEV-ROL-001', operationType: '维护', operator: 'admin', result: '进入维护模式，检查电机', operationTime: '2024-06-01 16:00:00' },
+        { id: 5, deviceCode: 'DEV-LIT-001', operationType: '启动', operator: 'operator', result: '补光灯已开启，亮度80%', operationTime: '2024-06-01 08:00:00' },
+        { id: 6, deviceCode: 'DEV-IRR-001', operationType: '停止', operator: 'admin', result: '灌溉阀已关闭', operationTime: '2024-06-01 18:00:00' },
+        { id: 7, deviceCode: 'DEV-IRR-002', operationType: '校准', operator: 'tech', result: '流量传感器校准完成', operationTime: '2024-06-01 10:00:00' },
+        { id: 8, deviceCode: 'DEV-LIT-002', operationType: '停止', operator: 'operator', result: '补光灯已关闭', operationTime: '2024-05-31 20:00:00' }
+    ],
+
+    // 产量预测历史
+    yieldHistory: [
+        { id: 1, cropName: '番茄', baseYield: 5000, envScore: 0.88, taskScore: 0.92, deviceScore: 0.95, predictedYield: 3872, createTime: '2024-06-01 10:00:00' },
+        { id: 2, cropName: '黄瓜', baseYield: 4000, envScore: 0.82, taskScore: 0.85, deviceScore: 0.90, predictedYield: 2503, createTime: '2024-05-28 14:00:00' },
+        { id: 3, cropName: '水稻', baseYield: 8000, envScore: 0.90, taskScore: 0.88, deviceScore: 0.92, predictedYield: 5834, createTime: '2024-05-25 09:00:00' },
+        { id: 4, cropName: '辣椒', baseYield: 3000, envScore: 0.75, taskScore: 0.80, deviceScore: 0.88, predictedYield: 1584, createTime: '2024-05-20 11:00:00' }
+    ]
+};
+
+// 初始化环境历史数据
+(function initEnvHistory() {
+    const now = new Date();
+    for (let i = 0; i < 50; i++) {
+        const t = new Date(now - i * 3600000);
+        const timeStr = t.getFullYear() + '-' +
+            String(t.getMonth() + 1).padStart(2, '0') + '-' +
+            String(t.getDate()).padStart(2, '0') + ' ' +
+            String(t.getHours()).padStart(2, '0') + ':' +
+            String(t.getMinutes()).padStart(2, '0') + ':00';
+        mockStore.environmentHistory.push({
+            id: i + 1,
+            recordTime: timeStr,
+            collectTime: timeStr,
+            soilHumidity: 45 + Math.random() * 30,
+            airTemperature: 22 + Math.random() * 15,
+            airHumidity: 50 + Math.random() * 30,
+            lightIntensity: 2000 + Math.random() * 6000,
+            co2: 400 + Math.random() * 600,
+            soilTemperature: 18 + Math.random() * 12
+        });
+    }
+})();
+
+// ============================================================
+// Mock 路由处理器
+// ============================================================
+const mockRoutes = {
+    // ---- 认证 ----
+    'POST /api/auth/login': (body) => {
+        const user = mockStore.users.find(u => u.username === body.username && u.password === body.password);
+        if (!user) return { code: 401, message: '用户名或密码错误' };
+        mockStore.currentUser = user;
+        return { code: 200, data: { token: 'mock-jwt-token-' + user.username, user: { id: user.id, username: user.username, role: user.role } } };
+    },
+    'POST /api/auth/register': (body) => {
+        if (mockStore.users.find(u => u.username === body.username)) {
+            return { code: 400, message: '用户名已存在' };
+        }
+        const newUser = { id: mockStore.users.length + 1, username: body.username, password: body.password, role: body.role || 'VIEWER', createdAt: new Date().toISOString().replace('T', ' ').substring(0, 19) };
+        mockStore.users.push(newUser);
+        return { code: 200, data: { token: 'mock-jwt-token-' + newUser.username, user: { id: newUser.id, username: newUser.username, role: newUser.role } } };
+    },
+    'POST /api/auth/change-password': (body) => {
+        const user = mockStore.users.find(u => u.username === body.username);
+        if (!user || user.password !== body.oldPassword) return { code: 400, message: '原密码错误' };
+        user.password = body.newPassword;
+        return { code: 200, data: '密码修改成功' };
+    },
+
+    // ---- 环境数据 ----
+    'GET /api/environment/latest': () => {
+        const d = mockStore.environmentHistory[0];
+        return { code: 200, data: d };
+    },
+    'GET /api/environment/history': (params) => {
+        const page = parseInt(params?.page || 0);
+        const size = parseInt(params?.size || 10);
+        const start = page * size;
+        const content = mockStore.environmentHistory.slice(start, start + size);
+        return { code: 200, data: { content, totalElements: mockStore.environmentHistory.length } };
+    },
+    'GET /api/environment/trend': () => {
+        return { code: 200, data: mockStore.environmentHistory.slice(0, 24).reverse() };
+    },
+    'POST /api/environment/collect-and-control': () => {
+        const now = new Date();
+        const timeStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':00';
+        const newRecord = {
+            id: mockStore.environmentHistory.length + 1,
+            recordTime: timeStr, collectTime: timeStr,
+            soilHumidity: 45 + Math.random() * 30,
+            airTemperature: 22 + Math.random() * 15,
+            airHumidity: 50 + Math.random() * 30,
+            lightIntensity: 2000 + Math.random() * 6000,
+            co2: 400 + Math.random() * 600,
+            soilTemperature: 18 + Math.random() * 12
+        };
+        mockStore.environmentHistory.unshift(newRecord);
+        return { code: 200, data: newRecord };
+    },
+
+    // ---- 设备管理 ----
+    'GET /api/devices/list': () => {
+        return { code: 200, data: mockStore.devices };
+    },
+    'POST /api/devices/*/start': (body, url) => {
+        const code = url.match(/devices\/(.+?)\/start/)?.[1];
+        const device = mockStore.devices.find(d => d.deviceCode === code);
+        if (!device) return { code: 404, message: '设备不存在' };
+        if (device.state !== 'STANDBY' && device.state !== 'MAINTENANCE') return { code: 400, message: '设备当前状态不允许启动' };
+        device.state = 'RUNNING';
+        device.online = true;
+        return { code: 200, data: device.deviceName + ' 已启动' };
+    },
+    'POST /api/devices/*/stop': (body, url) => {
+        const code = url.match(/devices\/(.+?)\/stop/)?.[1];
+        const device = mockStore.devices.find(d => d.deviceCode === code);
+        if (!device) return { code: 404, message: '设备不存在' };
+        if (device.state !== 'RUNNING') return { code: 400, message: '设备当前状态不允许停止' };
+        device.state = 'STANDBY';
+        return { code: 200, data: device.deviceName + ' 已停止' };
+    },
+    'POST /api/devices/*/fault': (body, url) => {
+        const code = url.match(/devices\/(.+?)\/fault/)?.[1];
+        const device = mockStore.devices.find(d => d.deviceCode === code);
+        if (!device) return { code: 404, message: '设备不存在' };
+        device.state = 'FAULT';
+        device.online = false;
+        return { code: 200, data: device.deviceName + ' 已标记故障' };
+    },
+    'POST /api/devices/*/maintain': (body, url) => {
+        const code = url.match(/devices\/(.+?)\/maintain/)?.[1];
+        const device = mockStore.devices.find(d => d.deviceCode === code);
+        if (!device) return { code: 404, message: '设备不存在' };
+        device.state = 'MAINTENANCE';
+        return { code: 200, data: device.deviceName + ' 已进入维护模式' };
+    },
+    'POST /api/devices/*/calibrate': (body, url) => {
+        const code = url.match(/devices\/(.+?)\/calibrate/)?.[1];
+        const device = mockStore.devices.find(d => d.deviceCode === code);
+        if (!device) return { code: 404, message: '设备不存在' };
+        device.state = 'STANDBY';
+        return { code: 200, data: device.deviceName + ' 校准完成' };
+    },
+
+    // ---- 统计数据 ----
+    'GET /api/statistics/overview': () => {
+        return {
+            code: 200, data: {
+                deviceTotal: mockStore.devices.length,
+                deviceRunning: mockStore.devices.filter(d => d.state === 'RUNNING').length,
+                deviceFault: mockStore.devices.filter(d => d.state === 'FAULT').length,
+                todayOperations: mockStore.operationLogs.length,
+                pendingAlerts: mockStore.alerts.filter(a => !a.handled).length
+            }
+        };
+    },
+    'GET /api/statistics/devices/distribution': () => {
+        const dist = {};
+        mockStore.devices.forEach(d => { dist[d.state] = (dist[d.state] || 0) + 1; });
+        return { code: 200, data: dist };
+    },
+    'GET /api/statistics/operations/summary': () => {
+        const summary = {};
+        mockStore.operationLogs.forEach(l => { summary[l.operationType] = (summary[l.operationType] || 0) + 1; });
+        return { code: 200, data: summary };
+    },
+    'GET /api/statistics/environment/summary': () => {
+        const h = mockStore.environmentHistory;
+        const n = h.length || 1;
+        return {
+            code: 200, data: {
+                '平均土壤湿度(%)': (h.reduce((s, r) => s + r.soilHumidity, 0) / n).toFixed(1),
+                '平均空气温度(°C)': (h.reduce((s, r) => s + r.airTemperature, 0) / n).toFixed(1),
+                '平均光照强度(lux)': (h.reduce((s, r) => s + r.lightIntensity, 0) / n).toFixed(0),
+                '平均CO₂(ppm)': (h.reduce((s, r) => s + r.co2, 0) / n).toFixed(0)
+            }
+        };
+    },
+    'GET /api/statistics/logs': (params) => {
+        const page = parseInt(params?.page || 0);
+        const size = parseInt(params?.size || 10);
+        const deviceCode = params?.deviceCode;
+        let logs = mockStore.operationLogs;
+        if (deviceCode) logs = logs.filter(l => l.deviceCode.includes(deviceCode));
+        const start = page * size;
+        return { code: 200, data: { content: logs.slice(start, start + size), totalElements: logs.length } };
+    },
+    'POST /api/statistics/yield-predict': (body) => {
+        const result = {
+            id: mockStore.yieldHistory.length + 1,
+            cropName: body.cropName,
+            baseYield: body.baseYield,
+            envScore: body.envScore,
+            taskScore: body.taskScore,
+            deviceScore: body.deviceScore,
+            predictedYield: Math.round(body.baseYield * body.envScore * body.taskScore * body.deviceScore),
+            createTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
+        };
+        mockStore.yieldHistory.unshift(result);
+        return { code: 200, data: result };
+    },
+    'GET /api/statistics/yield-predict/history': (params) => {
+        const page = parseInt(params?.page || 0);
+        const size = parseInt(params?.size || 10);
+        const start = page * size;
+        return { code: 200, data: { content: mockStore.yieldHistory.slice(start, start + size), totalElements: mockStore.yieldHistory.length } };
+    },
+
+    // ---- 任务管理 ----
+    'GET /api/tasks': () => {
+        return { code: 200, data: mockStore.tasks };
+    },
+    'POST /api/tasks': (body) => {
+        const newTask = {
+            id: mockStore.tasks.length + 1,
+            taskName: body.taskName,
+            taskType: body.taskType,
+            status: 'TODO',
+            assignee: body.assignee || '未分配',
+            createTime: new Date().toISOString().replace('T', ' ').substring(0, 19),
+            finishTime: null,
+            remark: body.remark || ''
+        };
+        mockStore.tasks.unshift(newTask);
+        return { code: 200, data: newTask };
+    },
+    'PUT /api/tasks/*/start': (body, url) => {
+        const id = parseInt(url.match(/tasks\/(\d+)\/start/)?.[1]);
+        const task = mockStore.tasks.find(t => t.id === id);
+        if (task) task.status = 'DOING';
+        return { code: 200, data: '任务已开始' };
+    },
+    'PUT /api/tasks/*/finish': (body, url) => {
+        const id = parseInt(url.match(/tasks\/(\d+)\/finish/)?.[1]);
+        const task = mockStore.tasks.find(t => t.id === id);
+        if (task) { task.status = 'DONE'; task.finishTime = new Date().toISOString().replace('T', ' ').substring(0, 19); }
+        return { code: 200, data: '任务已完成' };
+    },
+    'PUT /api/tasks/*/cancel': (body, url) => {
+        const id = parseInt(url.match(/tasks\/(\d+)\/cancel/)?.[1]);
+        const task = mockStore.tasks.find(t => t.id === id);
+        if (task) task.status = 'CANCELLED';
+        return { code: 200, data: '任务已取消' };
+    },
+    'DELETE /api/tasks/*': (body, url) => {
+        const id = parseInt(url.match(/tasks\/(\d+)/)?.[1]);
+        mockStore.tasks = mockStore.tasks.filter(t => t.id !== id);
+        return { code: 200, data: '删除成功' };
+    },
+
+    // ---- 预警管理 ----
+    'GET /api/alerts': () => {
+        return { code: 200, data: mockStore.alerts };
+    },
+    'GET /api/alerts/stats': () => {
+        return {
+            code: 200, data: {
+                critical: mockStore.alerts.filter(a => a.alertLevel === 'CRITICAL' && !a.handled).length,
+                warning: mockStore.alerts.filter(a => a.alertLevel === 'WARNING' && !a.handled).length,
+                info: mockStore.alerts.filter(a => a.alertLevel === 'INFO' && !a.handled).length,
+                resolved: mockStore.alerts.filter(a => a.handled).length
+            }
+        };
+    },
+    'PUT /api/alerts/*/handle': (body, url) => {
+        const id = parseInt(url.match(/alerts\/(\d+)\/handle/)?.[1]);
+        const alert = mockStore.alerts.find(a => a.id === id);
+        if (alert) alert.handled = true;
+        return { code: 200, data: '预警已处理' };
+    },
+
+    // ---- 用户管理 ----
+    'GET /api/users/list': () => {
+        return { code: 200, data: mockStore.users.map(u => ({ id: u.id, username: u.username, role: u.role, createdAt: u.createdAt })) };
+    },
+    'PUT /api/users/*': (body, url) => {
+        const username = url.match(/users\/(.+)/)?.[1];
+        const user = mockStore.users.find(u => u.username === username);
+        if (user) user.role = body.role;
+        return { code: 200, data: '修改成功' };
+    },
+    'DELETE /api/users/*': (body, url) => {
+        const username = url.match(/users\/(.+)/)?.[1];
+        mockStore.users = mockStore.users.filter(u => u.username !== username);
+        return { code: 200, data: '删除成功' };
+    },
+
+    // ---- 系统 ----
+    'GET /api/system/health': () => {
+        return { code: 200, data: { status: 'UP', mode: 'mock', timestamp: Date.now() } };
+    },
+    'POST /api/system/init-devices': () => {
+        return { code: 200, data: '设备初始化完成' };
+    },
+    'POST /api/system/init-users': () => {
+        return { code: 200, data: '用户初始化完成' };
+    }
+};
+
+// ============================================================
+// Mock 路由匹配器
+// ============================================================
+function matchMockRoute(method, url) {
+    // 精确匹配
+    const exactKey = method + ' ' + url;
+    if (mockRoutes[exactKey]) return mockRoutes[exactKey];
+
+    // 通配符匹配
+    for (const [pattern, handler] of Object.entries(mockRoutes)) {
+        const [pMethod, pPath] = pattern.split(' ');
+        if (pMethod !== method) continue;
+
+        // 将路径模式转为正则
+        const regex = new RegExp('^' + pPath.replace(/\*/g, '[^/]+') + '$');
+        if (regex.test(url)) return handler;
+    }
+    return null;
+}
+
+// ============================================================
+// 全局 fetch 拦截：后端不可用时自动使用 Mock
+// ============================================================
+const originalFetch = window.fetch;
+window.fetch = async function(url, options = {}) {
+    const urlStr = typeof url === 'string' ? url : url.url || '';
+    const method = (options.method || 'GET').toUpperCase();
+
+    // 提取相对路径
+    let relativePath = urlStr;
+    try {
+        const u = new URL(urlStr);
+        relativePath = u.pathname + u.search;
+    } catch { /* 非完整URL，直接使用 */ }
+
+    // 提取查询参数
+    const [pathname, search] = relativePath.split('?');
+    const params = {};
+    if (search) {
+        search.split('&').forEach(p => {
+            const [k, v] = p.split('=');
+            params[decodeURIComponent(k)] = decodeURIComponent(v || '');
+        });
+    }
+
+    // 解析请求体
+    let body = null;
+    if (options.body) {
+        try { body = JSON.parse(options.body); } catch { body = options.body; }
+    }
+
+    try {
+        // 先尝试真实 API
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+        const response = await originalFetch.call(this, url, { ...options, signal: controller.signal });
+        clearTimeout(timeoutId);
+        return response;
+    } catch (e) {
+        // 后端不可用，使用 Mock
+        const handler = matchMockRoute(method, pathname);
+        if (handler) {
+            console.log('%c[Mock] ' + method + ' ' + pathname, 'color: #e6a23c; font-weight: bold;');
+            const result = handler(body, pathname, params);
+            return new Response(JSON.stringify(result), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        // 无匹配的 Mock 路由
+        console.warn('%c[Mock] 未匹配: ' + method + ' ' + pathname, 'color: #f56c6c;');
+        return new Response(JSON.stringify({ code: 200, data: null }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+};
+
+// ============================================================
+// 创建 axios 实例（供 api.js 内部使用）
+// ============================================================
 const api = axios.create({
     baseURL: API_BASE_URL,
-    timeout: 10000,
-    headers: {
-        'Content-Type': 'application/json'
-    }
+    timeout: API_TIMEOUT,
+    headers: { 'Content-Type': 'application/json' }
 });
 
-// 响应拦截器
 api.interceptors.response.use(
     response => {
         const { data } = response;
-        if (data.code === 200) {
-            return data.data;
-        }
+        if (data.code === 200) return data.data;
         return Promise.reject(new Error(data.message || '请求失败'));
     },
     error => {
@@ -25,111 +460,74 @@ api.interceptors.response.use(
     }
 );
 
-// 设备管理 API
+// ============================================================
+// 导出 API 工具（保持兼容）
+// ============================================================
 const deviceApi = {
-    // 获取设备列表
     getList: () => api.get('/api/devices/list'),
-
-    // 根据编号获取设备
-    getByCode: (code) => api.get(`/api/devices/${code}`),
-
-    // 启动设备
-    start: (code) => api.post(`/api/devices/${code}/start`),
-
-    // 停止设备
-    stop: (code) => api.post(`/api/devices/${code}/stop`),
-
-    // 标记故障
-    markFault: (code) => api.post(`/api/devices/${code}/fault`),
-
-    // 维护设备
-    maintain: (code) => api.post(`/api/devices/${code}/maintain`),
-
-    // 校准设备
-    calibrate: (code) => api.post(`/api/devices/${code}/calibrate`),
-
-    // 远程控制
+    getByCode: (code) => api.get('/api/devices/' + code),
+    start: (code) => api.post('/api/devices/' + code + '/start'),
+    stop: (code) => api.post('/api/devices/' + code + '/stop'),
+    markFault: (code) => api.post('/api/devices/' + code + '/fault'),
+    maintain: (code) => api.post('/api/devices/' + code + '/maintain'),
+    calibrate: (code) => api.post('/api/devices/' + code + '/calibrate'),
     remoteControl: (username, deviceCode, action) =>
-        api.post(`/api/devices/remote-control?username=${username}&deviceCode=${deviceCode}&action=${action}`),
-
-    // 装饰器演示
-    decoratorDemo: (code) => api.get(`/api/devices/decorator-demo/${code}`)
+        api.post('/api/devices/remote-control?username=' + username + '&deviceCode=' + deviceCode + '&action=' + action),
+    decoratorDemo: (code) => api.get('/api/devices/decorator-demo/' + code)
 };
 
-// 环境数据 API
 const environmentApi = {
-    // 采集环境数据
     collect: () => api.post('/api/environment/collect'),
-
-    // 采集并自动控制
     collectAndControl: () => api.post('/api/environment/collect-and-control'),
-
-    // 获取最新数据
     getLatest: () => api.get('/api/environment/latest'),
-
-    // 获取所有数据
     getList: () => api.get('/api/environment/list')
 };
 
-// 统计数据 API
 const statisticsApi = {
-    // 系统总览
     getOverview: () => api.get('/api/statistics/overview'),
-
-    // 产量预测
     predictYield: (data) => api.post('/api/statistics/yield-predict', data),
-
-    // 环境统计
     getEnvironmentSummary: () => api.get('/api/statistics/environment/summary'),
-
-    // 设备统计
     getDeviceSummary: () => api.get('/api/statistics/devices/summary')
 };
 
-// 系统管理 API
 const systemApi = {
-    // 初始化设备
     initDevices: () => api.post('/api/system/init-devices'),
-
-    // 初始化用户
     initUsers: () => api.post('/api/system/init-users'),
-
-    // 健康检查
     health: () => api.get('/api/system/health'),
-
-    // 模拟事件
     simulateEvent: (event) => api.post('/api/system/events/simulate', event)
 };
 
-// 农事任务 API
 const taskApi = {
-    // 获取任务列表
     getList: () => api.get('/api/tasks/list'),
-
-    // 创建任务
     create: (task) => api.post('/api/tasks', task),
-
-    // 完成任务
-    complete: (id) => api.post(`/api/tasks/${id}/complete`)
+    complete: (id) => api.post('/api/tasks/' + id + '/complete')
 };
 
-// 命令队列 API
 const commandApi = {
-    // 发送命令
     send: (command) => api.post('/api/commands/send', command),
-
-    // 获取队列状态
     getQueueStatus: () => api.get('/api/commands/queue-status')
 };
 
-// 策略 API
 const strategyApi = {
-    // 灌溉策略
     executeIrrigation: (data) => api.post('/api/strategies/irrigation', data),
-
-    // 通风策略
     executeVentilation: (data) => api.post('/api/strategies/ventilation', data),
-
-    // 补光策略
     executeLighting: (data) => api.post('/api/strategies/lighting', data)
 };
+
+const knowledgeGraphApi = {
+    overview: () => api.get('/api/knowledge-graph/overview'),
+    search: (params) => api.get('/api/knowledge-graph/search', { params }),
+    rebuild: () => api.post('/api/knowledge-graph/rebuild')
+};
+window.knowledgeGraphApi = knowledgeGraphApi;
+
+const weatherApi = {
+    current: (params) => api.get('/api/weather/current', { params }),
+    forecast: (params) => api.get('/api/weather/forecast', { params }),
+    history: (params) => api.get('/api/weather/history', { params }),
+    decisionInput: (params) => api.get('/api/weather/decision-input', { params })
+};
+window.weatherApi = weatherApi;
+
+// 导出 Mock 存储，供调试使用
+window.mockStore = mockStore;

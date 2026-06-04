@@ -1,0 +1,5 @@
+rdflib
+pandas
+neo4j
+python-dotenv
+tqdm
