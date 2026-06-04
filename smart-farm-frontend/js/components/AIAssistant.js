@@ -293,7 +293,7 @@ const AIAssistant = {
         // 清理AI返回内容中的Markdown符号
         const cleanResult = (text) => {
             if (!text) return '';
-            return text.replace(/[*#]/g, '');
+            return text.replace(/[*#\-]/g, '');
         };
 
         const getAuthHeaders = () => ({
