@@ -26,12 +26,24 @@ public class StatisticsService {
 
     public Map<String, Object> getOverview() {
         Map<String, Object> stats = new LinkedHashMap<>();
-        stats.put("设备总数", deviceRepository.count());
-        stats.put("在线设备", deviceRepository.findByState("STANDBY").size() +
-                deviceRepository.findByState("RUNNING").size());
-        stats.put("未处理预警", alertRecordRepository.findByHandledFalseOrderByCreateTimeDesc().size());
-        stats.put("待办任务", farmTaskRepository.findByStatus("TODO").size());
-        stats.put("环境数据条数", environmentRecordRepository.count());
+        long total = deviceRepository.count();
+        long running = deviceRepository.findByState("RUNNING").size();
+        long fault = deviceRepository.findByState("FAULT").size();
+
+        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+        List<DeviceOperationLog> allLogs = deviceOperationLogRepository.findAll();
+        long todayOps = allLogs.stream()
+                .filter(log -> log.getOperationTime() != null && log.getOperationTime().isAfter(todayStart))
+                .count();
+
+        stats.put("deviceTotal", total);
+        stats.put("deviceRunning", running);
+        stats.put("deviceFault", fault);
+        stats.put("todayOperations", todayOps);
+        stats.put("onlineDevices", deviceRepository.findByState("STANDBY").size() + running);
+        stats.put("pendingAlerts", alertRecordRepository.findByHandledFalseOrderByCreateTimeDesc().size());
+        stats.put("pendingTasks", farmTaskRepository.findByStatus("TODO").size());
+        stats.put("envDataCount", environmentRecordRepository.count());
         return stats;
     }
 
