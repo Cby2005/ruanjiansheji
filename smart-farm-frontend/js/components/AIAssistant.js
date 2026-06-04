@@ -251,6 +251,7 @@ const AIAssistant = {
     `,
 
     setup() {
+        const API_BASE_URL = 'http://localhost:8080';
         const activeTab = Vue.ref('');
         const loading = Vue.ref(false);
         const result = Vue.ref('');
@@ -297,7 +298,7 @@ const AIAssistant = {
         const analyzeEnvironment = async () => {
             loading.value = true;
             try {
-                const response = await fetch('/api/agent/analyze-environment', {
+                const response = await fetch(API_BASE_URL + '/api/agent/analyze-environment', {
                     method: 'POST',
                     headers: getAuthHeaders(),
                     body: JSON.stringify(envData)
@@ -318,7 +319,7 @@ const AIAssistant = {
         const diagnoseDevice = async () => {
             loading.value = true;
             try {
-                const response = await fetch('/api/agent/diagnose-device', {
+                const response = await fetch(API_BASE_URL + '/api/agent/diagnose-device', {
                     method: 'POST',
                     headers: getAuthHeaders(),
                     body: JSON.stringify(deviceData)
@@ -339,7 +340,7 @@ const AIAssistant = {
         const planTasks = async () => {
             loading.value = true;
             try {
-                const response = await fetch('/api/agent/plan-tasks', {
+                const response = await fetch(API_BASE_URL + '/api/agent/plan-tasks', {
                     method: 'POST',
                     headers: getAuthHeaders(),
                     body: JSON.stringify(taskContext)
@@ -360,7 +361,7 @@ const AIAssistant = {
         const analyzeAlerts = async () => {
             loading.value = true;
             try {
-                const response = await fetch('/api/agent/analyze-alerts', {
+                const response = await fetch(API_BASE_URL + '/api/agent/analyze-alerts', {
                     method: 'POST',
                     headers: getAuthHeaders(),
                     body: JSON.stringify(alertData)
@@ -382,7 +383,7 @@ const AIAssistant = {
             if (!question.value.trim()) return;
             loading.value = true;
             try {
-                const response = await fetch('/api/agent/ask', {
+                const response = await fetch(API_BASE_URL + '/api/agent/ask', {
                     method: 'POST',
                     headers: getAuthHeaders(),
                     body: JSON.stringify({ question: question.value })
