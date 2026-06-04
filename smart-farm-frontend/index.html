@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智慧农场综合管理平台</title>
+    <title>鏅烘収鍐滃満缁煎悎绠＄悊骞冲彴</title>
     <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- Vue Router -->
@@ -41,7 +41,7 @@
         .agent-workbench .list-title { font-size: 13px; font-weight: 700; margin-top: 8px; color: #303133; }
         .agent-workbench .compact-list { margin: 6px 0 0; padding-left: 18px; color: #606266; font-size: 13px; line-height: 1.7; }
 
-        /* ========== 智能决策中心 新样式 ========== */
+        /* ========== 鏅鸿兘鍐崇瓥涓績 鏂版牱寮?========== */
         .agent-hero {
             background: linear-gradient(135deg, #f8faf8 0%, #eef6ee 50%, #e8f2e8 100%);
             border-radius: 12px; padding: 32px 36px;
@@ -150,10 +150,10 @@
         .project-division-page .division-duty { color: #606266; line-height: 1.7; min-height: 72px; }
         .project-division-page .division-subtitle { font-weight: 700; color: #303133; margin: 12px 0 8px; }
 
-        /* ========== Dashboard 首页样式 ========== */
+        /* ========== Dashboard 棣栭〉鏍峰紡 ========== */
         .dashboard-page { background: #f5f7fa; min-height: 100vh; }
 
-        /* Hero 区域 */
+        /* Hero 鍖哄煙 */
         .hero-section {
             position: relative;
             background: linear-gradient(135deg, #0f1b12 0%, #162218 40%, #1a2f1e 70%, #1d3322 100%);
@@ -264,7 +264,7 @@
             50% { opacity: 0.4; }
         }
 
-        /* Section 通用 */
+        /* Section 閫氱敤 */
         .section-block {
             max-width: 1200px; margin: 0 auto 24px;
             padding: 0 40px;
@@ -280,7 +280,7 @@
             font-size: 13px; color: #999; margin-left: 12px;
         }
 
-        /* 数据概览卡片 */
+        /* 鏁版嵁姒傝鍗＄墖 */
         .data-card {
             background: #fff; border-radius: 10px;
             padding: 20px; border-top: 3px solid #eee;
@@ -304,7 +304,7 @@
         .data-card-label { font-size: 13px; color: #666; font-weight: 500; }
         .data-card-range { font-size: 11px; color: #bbb; }
 
-        /* Agent 决策卡片 */
+        /* Agent 鍐崇瓥鍗＄墖 */
         .agent-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
         }
@@ -336,7 +336,7 @@
             font-size: 11px; color: #bbb;
         }
 
-        /* 预警列表 */
+        /* 棰勮鍒楄〃 */
         .alert-list { display: flex; flex-direction: column; gap: 10px; }
         .alert-item {
             display: flex; align-items: flex-start; gap: 12px;
@@ -356,9 +356,9 @@
         }
         .alert-item-time { font-size: 11px; color: #ccc; }
 
-        /* ========== 统一全局样式系统 ========== */
+        /* ========== 缁熶竴鍏ㄥ眬鏍峰紡绯荤粺 ========== */
 
-        /* 页面头部 */
+        /* 椤甸潰澶撮儴 */
         .page-header {
             display: flex; align-items: center; justify-content: space-between;
             margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
@@ -372,7 +372,7 @@
             font-size: 13px; color: #909399; margin: 4px 0 0;
         }
 
-        /* 统一统计卡片 */
+        /* 缁熶竴缁熻鍗＄墖 */
         .stat-card {
             background: #fff; border-radius: 8px; padding: 20px;
             border: 1px solid #ebeef5;
@@ -397,7 +397,7 @@
             font-size: 32px; opacity: 0.15; flex-shrink: 0; margin-left: 12px;
         }
 
-        /* 统一查询栏 */
+        /* 缁熶竴鏌ヨ鏍?*/
         .query-bar {
             background: #fff; border-radius: 8px; padding: 16px 20px;
             border: 1px solid #ebeef5;
@@ -405,7 +405,7 @@
             margin-bottom: 16px;
         }
 
-        /* 统一内容卡片 */
+        /* 缁熶竴鍐呭鍗＄墖 */
         .content-card {
             background: #fff; border-radius: 8px;
             border: 1px solid #ebeef5;
@@ -422,7 +422,7 @@
         }
         .content-card-body { padding: 20px; }
 
-        /* 统一标签色 */
+        /* 缁熶竴鏍囩鑹?*/
         .tag-success { background: #f0f9eb; color: #67c23a; }
         .tag-warning { background: #fdf6ec; color: #e6a23c; }
         .tag-danger { background: #fef0f0; color: #f56c6c; }
@@ -430,27 +430,121 @@
 
         /* 登录页 */
         .login-page {
-            min-height: 100vh; display: flex; align-items: center; justify-content: center;
-            background: #f5f7fa;
+            min-height: 100vh; display: flex; align-items: stretch; justify-content: center;
+            background: #101713;
         }
-        .login-card {
-            width: 420px; border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        .login-container {
+            display: flex; width: 960px; min-height: 580px; margin: auto;
+            border-radius: 16px; overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
         }
-        .login-logo {
-            width: 72px; height: 72px; border-radius: 50%;
-            background: #f0f9eb; display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 16px;
+        .login-brand {
+            flex: 1; background: linear-gradient(180deg, #0e2314 0%, #132e1a 100%);
+            padding: 48px 44px; display: flex; flex-direction: column; justify-content: center;
+            position: relative; overflow: hidden;
+        }
+        .login-brand::before {
+            content: ''; position: absolute; top: -120px; right: -120px;
+            width: 360px; height: 360px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(34,197,94,0.08) 0%, transparent 70%);
+        }
+        .login-brand-icon {
+            width: 56px; height: 56px; border-radius: 14px;
+            background: rgba(34,197,94,0.15); display: flex; align-items: center; justify-content: center;
+            margin-bottom: 24px; position: relative; z-index: 1;
+        }
+        .login-brand h1 {
+            color: #fff; font-size: 26px; font-weight: 700; margin: 0 0 10px 0;
+            position: relative; z-index: 1; letter-spacing: 0.5px;
+        }
+        .login-brand p {
+            color: rgba(255,255,255,0.55); font-size: 14px; line-height: 1.7; margin: 0;
+            position: relative; z-index: 1; max-width: 320px;
+        }
+        .login-brand-features {
+            margin-top: 40px; position: relative; z-index: 1;
+            display: flex; flex-direction: column; gap: 14px;
+        }
+        .login-brand-feature {
+            display: flex; align-items: flex-start; gap: 10px;
+            color: rgba(255,255,255,0.7); font-size: 13px;
+        }
+        .login-brand-feature i {
+            color: #22c55e; margin-top: 2px; font-size: 12px;
+        }
+        .login-form-panel {
+            flex: 1; background: #181c1a; padding: 48px 44px;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .login-form-panel h2 {
+            color: #e5e7eb; font-size: 20px; font-weight: 600; margin: 0 0 6px 0;
+        }
+        .login-form-panel .subtitle {
+            color: rgba(255,255,255,0.4); font-size: 13px; margin-bottom: 28px;
+        }
+        .login-tabs {
+            display: flex; gap: 0; margin-bottom: 28px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .login-tab {
+            padding: 8px 20px; font-size: 14px; color: rgba(255,255,255,0.4);
+            cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;
+        }
+        .login-tab.active {
+            color: #22c55e; border-bottom-color: #22c55e;
+        }
+        .login-btn {
+            width: 100%; height: 46px; font-size: 15px; font-weight: 600;
+            border-radius: 8px; border: none; cursor: pointer;
+            background: #22c55e; color: #000;
+            transition: all 0.2s;
+        }
+        .login-btn:hover { background: #16a34a; }
+        .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .login-quick-accounts {
+            margin-top: 28px; padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .login-quick-accounts p {
+            color: rgba(255,255,255,0.3); font-size: 12px; text-align: center; margin-bottom: 12px;
+        }
+        .quick-account-row {
+            display: flex; gap: 8px; flex-wrap: wrap;
+        }
+        .quick-account-btn {
+            flex: 1; min-width: 105px;
+            padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.6);
+            font-size: 12px; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 6px; justify-content: center;
+        }
+        .quick-account-btn:hover {
+            background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3);
+            color: #22c55e;
+        }
+        .login-password-rules {
+            margin-top: 4px; display: flex; gap: 6px; flex-wrap: wrap;
+        }
+        .password-rule {
+            font-size: 11px; padding: 2px 8px; border-radius: 4px;
+            background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.25);
+            transition: all 0.2s;
+        }
+        .password-rule.passed { background: rgba(34,197,94,0.1); color: #22c55e; }
+        @media (max-width: 800px) {
+            .login-container { width: 100%; min-height: 100vh; border-radius: 0; flex-direction: column; }
+            .login-brand { padding: 32px 24px; }
+            .login-form-panel { padding: 32px 24px; }
         }
 
-        /* 个人中心页 */
+        /* 涓汉涓績椤?*/
         .profile-header {
             background: #f5f7fa; padding: 32px 24px 24px;
             border-radius: 8px 8px 0 0; position: relative;
             border: 1px solid #ebeef5; border-bottom: none;
         }
 
-        /* 响应式 */
+        /* 鍝嶅簲寮?*/
         @media (max-width: 1200px) {
             .hero-content { flex-direction: column; text-align: center; }
             .hero-left { max-width: 100%; }
@@ -473,23 +567,25 @@
     </div>
 
     <!-- API Service -->
-    <script src="./js/api.js?v=v4"></script>
+    <script src="./js/api.js?v=v7"></script>
     <!-- Components -->
-    <script src="./js/components/Login.js?v=v4"></script>
-    <script src="./js/components/AppLayout.js?v=v4"></script>
-    <script src="./js/components/Dashboard.js?v=v4"></script>
-    <script src="./js/components/DeviceList.js?v=v4"></script>
-    <script src="./js/components/EnvironmentData.js?v=v4"></script>
-    <script src="./js/components/Statistics.js?v=v4"></script>
-    <script src="./js/components/UserManagement.js?v=v4"></script>
-    <script src="./js/components/AIAssistant.js?v=v4"></script>
-    <script src="./js/components/KnowledgeGraph.js?v=v4"></script>
-    <script src="./js/components/AgriKnowledgeHub.js?v=v4"></script>
-    <script src="./js/components/ProjectDivision.js?v=v4"></script>
-    <script src="./js/components/UserProfile.js?v=v4"></script>
-    <script src="./js/components/TaskManagement.js?v=v4"></script>
-    <script src="./js/components/AlertCenter.js?v=v4"></script>
-    <script src="./js/components/YieldPrediction.js?v=v4"></script>
-    <script src="./js/app.js?v=v4"></script>
+    <script src="./js/components/Login.js?v=v7"></script>
+    <script src="./js/components/AppLayout.js?v=v7"></script>
+    <script src="./js/components/Dashboard.js?v=v7"></script>
+    <script src="./js/components/DeviceList.js?v=v7"></script>
+    <script src="./js/components/EnvironmentData.js?v=v7"></script>
+    <script src="./js/components/Statistics.js?v=v7"></script>
+    <script src="./js/components/UserManagement.js?v=v7"></script>
+    <script src="./js/components/AIAssistant.js?v=v7"></script>
+    <script src="./js/components/KnowledgeGraph.js?v=v7"></script>
+    <script src="./js/components/AgriKnowledgeHub.js?v=v7"></script>
+    <script src="./js/components/ProjectDivision.js?v=v7"></script>
+    <script src="./js/components/UserProfile.js?v=v7"></script>
+    <script src="./js/components/TaskManagement.js?v=v7"></script>
+    <script src="./js/components/AlertCenter.js?v=v7"></script>
+    <script src="./js/components/YieldPrediction.js?v=v7"></script>
+    <script src="./js/app.js?v=v7"></script>
 </body>
 </html>
+
+

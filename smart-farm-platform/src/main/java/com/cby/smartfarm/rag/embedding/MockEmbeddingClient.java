@@ -2,17 +2,13 @@ package com.cby.smartfarm.rag.embedding;
 
 import com.cby.smartfarm.rag.config.EmbeddingProperties;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(prefix = "embedding", name = "provider", havingValue = "mock", matchIfMissing = true)
 public class MockEmbeddingClient implements EmbeddingClient {
 
     private final EmbeddingProperties properties;

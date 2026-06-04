@@ -16,6 +16,10 @@ public class EmbeddingProperties {
     private Integer dimension = 768;
 
     public boolean isMock() {
-        return provider == null || provider.equalsIgnoreCase("mock");
+        return "mock".equalsIgnoreCase(provider);
+    }
+
+    public boolean isOpenAiCompatible() {
+        return "openai_compatible".equalsIgnoreCase(provider) || "api".equalsIgnoreCase(provider);
     }
 }

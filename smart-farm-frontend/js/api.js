@@ -605,6 +605,18 @@ const api = axios.create({
     headers: { 'Content-Type': 'application/json' }
 });
 
+// 请求拦截器：自动携带 JWT Token
+api.interceptors.request.use(
+    config => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers['Authorization'] = 'Bearer ' + token;
+        }
+        return config;
+    },
+    error => Promise.reject(error)
+);
+
 api.interceptors.response.use(
     response => {
         const { data } = response;
@@ -613,6 +625,14 @@ api.interceptors.response.use(
     },
     error => {
         console.error('API Error:', error);
+        // 401/403 时跳转登录页
+        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            if (window.location.hash !== '#/login') {
+                window.location.hash = '#/login';
+            }
+        }
         return Promise.reject(error);
     }
 );
@@ -659,7 +679,7 @@ const systemApi = {
 };
 
 const taskApi = {
-    getList: () => api.get('/api/tasks/list'),
+    getList: () => api.get('/api/tasks'),
     create: (task) => api.post('/api/tasks', task),
     complete: (id) => api.post('/api/tasks/' + id + '/complete')
 };

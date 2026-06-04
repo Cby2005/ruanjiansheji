@@ -26,7 +26,7 @@ public class KnowledgeChunk {
 
     private Long documentId;
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @Column(length = 500)

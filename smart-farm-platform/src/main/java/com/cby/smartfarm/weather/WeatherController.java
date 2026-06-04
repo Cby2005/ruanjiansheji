@@ -71,4 +71,12 @@ public class WeatherController {
                 .orElseThrow(() -> new RuntimeException("未找到城市: " + cityName));
         return Result.success(weatherService.decisionInput(1L, loc.getLatitude(), loc.getLongitude()));
     }
+
+    @GetMapping("/forecast/by-city")
+    @Operation(summary = "根据城市名称查询天气预报")
+    public Result<WeatherForecastDTO> forecastByCity(@RequestParam String cityName) {
+        var loc = cityLocationService.findByName(cityName)
+                .orElseThrow(() -> new RuntimeException("未找到城市: " + cityName));
+        return Result.success(weatherService.forecast(1L, loc.getLatitude(), loc.getLongitude()));
+    }
 }

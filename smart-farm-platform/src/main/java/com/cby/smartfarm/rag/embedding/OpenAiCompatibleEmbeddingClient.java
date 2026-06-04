@@ -2,19 +2,15 @@ package com.cby.smartfarm.rag.embedding;
 
 import com.cby.smartfarm.rag.config.EmbeddingProperties;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(prefix = "embedding", name = "provider", havingValue = "openai_compatible")
 public class OpenAiCompatibleEmbeddingClient implements EmbeddingClient {
 
     private final EmbeddingProperties properties;

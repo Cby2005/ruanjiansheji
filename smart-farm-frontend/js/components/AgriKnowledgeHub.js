@@ -354,10 +354,10 @@ const AgriKnowledgeHub = {
             weatherLoading.value = true;
             weatherError.value = '';
             try {
-                const cityName = selectedCity.value.replace('市', '');
+                const cityName = selectedCity.value;
                 const [decisionData, forecastData] = await Promise.all([
                     api.get('/api/weather/decision-input/by-city', { params: { cityName } }),
-                    api.get('/api/weather/forecast', { params: { cityName } }).catch(() => ({ hourly: [] }))
+                    api.get('/api/weather/forecast/by-city', { params: { cityName } }).catch(() => ({ hourly: [] }))
                 ]);
                 weatherDecision.value = decisionData || {};
                 forecast.value = forecastData || { hourly: [] };

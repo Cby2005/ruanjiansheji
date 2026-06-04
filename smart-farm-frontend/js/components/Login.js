@@ -1,109 +1,172 @@
 const Login = {
     template: `
         <div class="login-page">
-            <el-card class="login-card" shadow="always">
-                <!-- Logo -->
-                <div style="text-align: center; margin-bottom: 24px;">
-                    <div class="login-logo">
-                        <i class="fas fa-seedling" style="font-size: 32px; color: #67c23a;"></i>
+            <div class="login-container">
+                <!-- 左侧品牌区 -->
+                <div class="login-brand">
+                    <div class="login-brand-icon">
+                        <i class="fas fa-seedling" style="font-size: 24px; color: #22c55e;"></i>
                     </div>
-                    <h2 style="margin: 0; color: #303133; font-size: 20px;">智慧农场综合管理平台</h2>
-                    <p style="color: #909399; margin-top: 6px; font-size: 13px;">{{ isLogin ? '登录您的账户' : '创建新账户' }}</p>
+                    <h1>智慧农场综合管理平台</h1>
+                    <p>基于物联网与多智能体协作的精准农业管理系统，覆盖环境监测、设备控制、产量预测与农事决策全流程。</p>
+                    <div class="login-brand-features">
+                        <div class="login-brand-feature">
+                            <i class="fas fa-check-circle"></i>
+                            <span>实时环境监测与智能预警</span>
+                        </div>
+                        <div class="login-brand-feature">
+                            <i class="fas fa-check-circle"></i>
+                            <span>多设备联动控制与状态管理</span>
+                        </div>
+                        <div class="login-brand-feature">
+                            <i class="fas fa-check-circle"></i>
+                            <span>产量预测与农事智能建议</span>
+                        </div>
+                        <div class="login-brand-feature">
+                            <i class="fas fa-check-circle"></i>
+                            <span>多代理协作决策支持</span>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- 登录/注册切换 -->
-                <el-tabs v-model="activeTab" @tab-click="onTabChange" style="margin-bottom: 10px;">
-                    <el-tab-pane label="登录" name="login"></el-tab-pane>
-                    <el-tab-pane label="注册" name="register"></el-tab-pane>
-                </el-tabs>
+                <!-- 右侧表单区 -->
+                <div class="login-form-panel">
+                    <h2>{{ isLogin ? '账户登录' : '创建账户' }}</h2>
+                    <p class="subtitle">{{ isLogin ? '欢迎回来，请输入您的账户信息' : '请填写以下信息完成注册' }}</p>
 
-                <!-- 登录表单 -->
-                <el-form v-if="isLogin" :model="loginForm" @submit.prevent="handleLogin" label-position="top">
-                    <el-form-item label="用户名">
-                        <el-input v-model="loginForm.username" placeholder="请输入用户名" prefix-icon="User" size="large"></el-input>
-                    </el-form-item>
-                    <el-form-item label="密码">
-                        <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" prefix-icon="Lock" size="large" show-password></el-input>
-                    </el-form-item>
-                    <el-form-item>
-                        <el-button type="primary" @click="handleLogin" :loading="loading" style="width: 100%; height: 44px; font-size: 16px;" size="large">
-                            {{ loading ? '登录中...' : '登录' }}
-                        </el-button>
-                    </el-form-item>
-                </el-form>
+                    <!-- 登录/注册切换 -->
+                    <div class="login-tabs">
+                        <div class="login-tab" :class="{ active: isLogin }" @click="switchTab('login')">登录</div>
+                        <div class="login-tab" :class="{ active: !isLogin }" @click="switchTab('register')">注册</div>
+                    </div>
 
-                <!-- 注册表单 -->
-                <el-form v-else :model="registerForm" @submit.prevent="handleRegister" label-position="top">
-                    <el-form-item label="用户名">
-                        <el-input v-model="registerForm.username" placeholder="请输入用户名" prefix-icon="User" size="large"></el-input>
-                    </el-form-item>
-                    <el-form-item label="密码">
-                        <el-input v-model="registerForm.password" type="password" placeholder="请输入密码" prefix-icon="Lock" size="large" show-password></el-input>
-                    </el-form-item>
-                    <el-form-item label="角色">
-                        <el-select v-model="registerForm.role" placeholder="请选择角色" style="width: 100%;" size="large">
-                            <el-option label="观察者" value="VIEWER"></el-option>
-                            <el-option label="操作员" value="OPERATOR"></el-option>
-                            <el-option label="技术员" value="TECHNICIAN"></el-option>
-                            <el-option label="管理员" value="ADMIN"></el-option>
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item>
-                        <el-button type="primary" @click="handleRegister" :loading="loading" style="width: 100%; height: 44px; font-size: 16px;" size="large">
-                            {{ loading ? '注册中...' : '注册' }}
-                        </el-button>
-                    </el-form-item>
-                </el-form>
+                    <!-- 登录表单 -->
+                    <template v-if="isLogin">
+                        <div style="margin-bottom: 16px;">
+                            <label style="color: rgba(255,255,255,0.5); font-size: 12px; display: block; margin-bottom: 6px;">用户名</label>
+                            <el-input v-model="loginForm.username" placeholder="请输入用户名" size="large"
+                                style="--el-input-border-color: rgba(255,255,255,0.1); --el-input-bg-color: rgba(255,255,255,0.04); --el-input-text-color: #e5e7eb;">
+                            </el-input>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="color: rgba(255,255,255,0.5); font-size: 12px; display: block; margin-bottom: 6px;">密码</label>
+                            <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" size="large" show-password
+                                @keyup.enter="handleLogin"
+                                style="--el-input-border-color: rgba(255,255,255,0.1); --el-input-bg-color: rgba(255,255,255,0.04); --el-input-text-color: #e5e7eb;">
+                            </el-input>
+                        </div>
 
-                <!-- 快速登录 -->
-                <div v-if="isLogin" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ebeef5;">
-                    <p style="font-size: 13px; color: #909399; text-align: center; margin-bottom: 12px;">快速登录（演示账户）</p>
-                    <el-row :gutter="10">
-                        <el-col :span="12">
-                            <el-button @click="quickLogin('admin', '123456')" style="width: 100%;" type="danger" plain size="default">
-                                <i class="fas fa-crown" style="margin-right: 4px;"></i>管理员
-                            </el-button>
-                        </el-col>
-                        <el-col :span="12">
-                            <el-button @click="quickLogin('tech', '123456')" style="width: 100%;" type="primary" plain size="default">
-                                <i class="fas fa-tools" style="margin-right: 4px;"></i>技术员
-                            </el-button>
-                        </el-col>
-                    </el-row>
-                    <el-row :gutter="10" style="margin-top: 10px;">
-                        <el-col :span="12">
-                            <el-button @click="quickLogin('operator', '123456')" style="width: 100%;" type="warning" plain size="default">
-                                <i class="fas fa-hand-pointer" style="margin-right: 4px;"></i>操作员
-                            </el-button>
-                        </el-col>
-                        <el-col :span="12">
-                            <el-button @click="quickLogin('viewer', '123456')" style="width: 100%;" type="info" plain size="default">
-                                <i class="fas fa-eye" style="margin-right: 4px;"></i>观察者
-                            </el-button>
-                        </el-col>
-                    </el-row>
+                        <button class="login-btn" :disabled="loading" @click="handleLogin">
+                            {{ loading ? '验证中...' : '登 录' }}
+                        </button>
+
+                        <el-alert v-if="error" :title="error" type="error" show-icon style="margin-top: 16px;" @close="error = ''"></el-alert>
+                    </template>
+
+                    <!-- 注册表单 -->
+                    <template v-else>
+                        <div style="margin-bottom: 16px;">
+                            <label style="color: rgba(255,255,255,0.5); font-size: 12px; display: block; margin-bottom: 6px;">用户名</label>
+                            <el-input v-model="registerForm.username" placeholder="3-20位字母或数字" size="large"
+                                @input="validateUsername"
+                                style="--el-input-border-color: rgba(255,255,255,0.1); --el-input-bg-color: rgba(255,255,255,0.04); --el-input-text-color: #e5e7eb;">
+                            </el-input>
+                        </div>
+                        <div style="margin-bottom: 8px;">
+                            <label style="color: rgba(255,255,255,0.5); font-size: 12px; display: block; margin-bottom: 6px;">密码</label>
+                            <el-input v-model="registerForm.password" type="password" placeholder="6-20位，建议包含字母和数字" size="large" show-password
+                                @input="checkPasswordStrength"
+                                style="--el-input-border-color: rgba(255,255,255,0.1); --el-input-bg-color: rgba(255,255,255,0.04); --el-input-text-color: #e5e7eb;">
+                            </el-input>
+                        </div>
+                        <div class="login-password-rules">
+                            <span class="password-rule" :class="{ passed: pwdLengthOk }">6-20位</span>
+                            <span class="password-rule" :class="{ passed: pwdHasLetter }">包含字母</span>
+                            <span class="password-rule" :class="{ passed: pwdHasNumber }">包含数字</span>
+                        </div>
+                        <div style="margin-bottom: 20px; margin-top: 12px;">
+                            <label style="color: rgba(255,255,255,0.5); font-size: 12px; display: block; margin-bottom: 6px;">角色</label>
+                            <el-select v-model="registerForm.role" placeholder="请选择角色" size="large" style="width: 100%;">
+                                <el-option label="观察者（只读查看权限）" value="VIEWER"></el-option>
+                                <el-option label="操作员（日常操作权限）" value="OPERATOR"></el-option>
+                                <el-option label="技术员（设备配置权限）" value="TECHNICIAN"></el-option>
+                                <el-option label="管理员（系统管理权限）" value="ADMIN"></el-option>
+                            </el-select>
+                        </div>
+
+                        <button class="login-btn" :disabled="loading || !canRegister" @click="handleRegister">
+                            {{ loading ? '注册中...' : '注 册' }}
+                        </button>
+
+                        <el-alert v-if="error" :title="error" type="error" show-icon style="margin-top: 16px;" @close="error = ''"></el-alert>
+                    </template>
+
+                    <!-- 演示账户 -->
+                    <div v-if="isLogin" class="login-quick-accounts">
+                        <p>快速体验账户</p>
+                        <div class="quick-account-row">
+                            <button class="quick-account-btn" @click="quickLogin('admin')">
+                                <i class="fas fa-shield-alt" style="font-size: 11px;"></i>管理员
+                            </button>
+                            <button class="quick-account-btn" @click="quickLogin('tech')">
+                                <i class="fas fa-wrench" style="font-size: 11px;"></i>技术员
+                            </button>
+                            <button class="quick-account-btn" @click="quickLogin('operator')">
+                                <i class="fas fa-play" style="font-size: 11px;"></i>操作员
+                            </button>
+                            <button class="quick-account-btn" @click="quickLogin('viewer')">
+                                <i class="fas fa-eye" style="font-size: 11px;"></i>观察者
+                            </button>
+                        </div>
+                    </div>
                 </div>
-
-                <!-- 错误提示 -->
-                <el-alert v-if="error" :title="error" type="error" show-icon style="margin-top: 15px;" @close="error = ''"></el-alert>
-            </el-card>
+            </div>
         </div>
     `,
 
     setup() {
         const isLogin = Vue.ref(true);
-        const activeTab = Vue.ref('login');
         const loading = Vue.ref(false);
         const error = Vue.ref('');
 
         const loginForm = Vue.reactive({ username: '', password: '' });
         const registerForm = Vue.reactive({ username: '', password: '', role: 'VIEWER' });
 
-        const onTabChange = (tab) => {
-            isLogin.value = tab.paneName === 'login';
+        // 密码强度校验
+        const pwdLengthOk = Vue.ref(false);
+        const pwdHasLetter = Vue.ref(false);
+        const pwdHasNumber = Vue.ref(false);
+
+        const checkPasswordStrength = () => {
+            const p = registerForm.password;
+            pwdLengthOk.value = p.length >= 6 && p.length <= 20;
+            pwdHasLetter.value = /[a-zA-Z]/.test(p);
+            pwdHasNumber.value = /[0-9]/.test(p);
+        };
+
+        // 用户名校验
+        const usernameValid = Vue.ref(true);
+        const validateUsername = () => {
+            const u = registerForm.username;
+            usernameValid.value = u.length >= 3 && u.length <= 20 && /^[a-zA-Z0-9_]+$/.test(u);
+        };
+
+        const canRegister = Vue.computed(() => {
+            return registerForm.username && registerForm.password
+                && pwdLengthOk.value && pwdHasLetter.value && pwdHasNumber.value
+                && usernameValid.value;
+        });
+
+        const switchTab = (tab) => {
+            isLogin.value = tab === 'login';
+            error.value = '';
         };
 
         const handleLogin = async () => {
+            if (!loginForm.username || !loginForm.password) {
+                error.value = '请输入用户名和密码';
+                return;
+            }
             loading.value = true;
             error.value = '';
             try {
@@ -116,19 +179,27 @@ const Login = {
                 if (data.code === 200) {
                     localStorage.setItem('token', data.data.token);
                     localStorage.setItem('user', JSON.stringify(data.data.user));
-                    window.location.href = '#/';
+                    window.location.hash = '#/';
                     window.location.reload();
                 } else {
-                    error.value = data.message;
+                    error.value = data.message || '登录失败';
                 }
             } catch (e) {
-                error.value = '登录失败，请检查网络连接';
+                error.value = '网络连接失败，请检查后端服务';
             } finally {
                 loading.value = false;
             }
         };
 
         const handleRegister = async () => {
+            if (!registerForm.username || !registerForm.password || !registerForm.role) {
+                error.value = '请完整填写注册信息';
+                return;
+            }
+            if (!canRegister.value) {
+                error.value = '请按照规则设置用户名和密码';
+                return;
+            }
             loading.value = true;
             error.value = '';
             try {
@@ -141,28 +212,31 @@ const Login = {
                 if (data.code === 200) {
                     localStorage.setItem('token', data.data.token);
                     localStorage.setItem('user', JSON.stringify(data.data.user));
-                    window.location.href = '#/';
+                    window.location.hash = '#/';
                     window.location.reload();
                 } else {
-                    error.value = data.message;
+                    error.value = data.message || '注册失败';
                 }
             } catch (e) {
-                error.value = '注册失败，请检查网络连接';
+                error.value = '网络连接失败，请检查后端服务';
             } finally {
                 loading.value = false;
             }
         };
 
-        const quickLogin = (username, password) => {
+        const quickLogin = (username) => {
             loginForm.username = username;
-            loginForm.password = password;
+            loginForm.password = '123456';
             handleLogin();
         };
 
         return {
-            isLogin, activeTab, loading, error,
+            isLogin, loading, error,
             loginForm, registerForm,
-            onTabChange, handleLogin, handleRegister, quickLogin
+            pwdLengthOk, pwdHasLetter, pwdHasNumber,
+            usernameValid, canRegister,
+            switchTab, handleLogin, handleRegister,
+            quickLogin, checkPasswordStrength, validateUsername
         };
     }
 };

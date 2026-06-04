@@ -11,7 +11,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:
@@ -46,16 +46,18 @@ milvus:
   port: ${MILVUS_PORT:19530}
   database: ${MILVUS_DATABASE:default}
   collection: ${MILVUS_COLLECTION:smart_farm_rag_chunks}
-  embedding-dim: ${MILVUS_EMBEDDING_DIM:768}
+  embedding-dim: ${MILVUS_EMBEDDING_DIM:1024}
   metric-type: ${MILVUS_METRIC_TYPE:COSINE}
   index-type: ${MILVUS_INDEX_TYPE:HNSW}
 
 embedding:
-  provider: ${EMBEDDING_PROVIDER:mock}
-  base-url: ${EMBEDDING_BASE_URL:}
-  api-key: ${EMBEDDING_API_KEY:}
-  model: ${EMBEDDING_MODEL:bge-base-zh-v1.5}
-  dimension: ${EMBEDDING_DIMENSION:768}
+  provider: ${EMBEDDING_TYPE:api}
+  base-url: ${EMBEDDING_API_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+  api-key: ${EMBEDDING_API_KEY:sk-a29c67d7442a49508444c950477fb968}
+  model: ${EMBEDDING_MODEL_NAME:text-embedding-v3}
+  dimension: ${EMBEDDING_DIMENSION:1024}
+  batch-size: ${EMBEDDING_BATCH_SIZE:10}
+  local-model-path: ${EMBEDDING_LOCAL_MODEL_PATH:BAAI/bge-base-zh-v1.5}
 
 logging:
   level:

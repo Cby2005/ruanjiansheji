@@ -257,7 +257,10 @@ const YieldPrediction = {
             try {
                 const response = await fetch('http://localhost:8080/api/statistics/yield-predict', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    },
                     body: JSON.stringify(form)
                 });
                 const data = await response.json();
@@ -279,7 +282,12 @@ const YieldPrediction = {
             historyLoading.value = true;
             try {
                 const response = await fetch(
-                    'http://localhost:8080/api/statistics/yield-predict/history?page=' + (currentPage.value - 1) + '&size=' + pageSize
+                    'http://localhost:8080/api/statistics/yield-predict/history?page=' + (currentPage.value - 1) + '&size=' + pageSize,
+                    {
+                        headers: {
+                            'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        }
+                    }
                 );
                 const data = await response.json();
                 if (data.code === 200 && data.data) {
