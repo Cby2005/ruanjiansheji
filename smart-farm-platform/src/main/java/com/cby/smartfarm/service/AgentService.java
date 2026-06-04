@@ -34,11 +34,10 @@ public class AgentService {
 
     /**
      * 智能环境分析
-     * 分析环境数据并给出建议
      */
     public Map<String, Object> analyzeEnvironment(Map<String, Object> envData) {
         String prompt = buildEnvironmentAnalysisPrompt(envData);
-        String response = callAI(prompt);
+        String response = callAI(prompt, "environment");
 
         Map<String, Object> result = new HashMap<>();
         result.put("analysis", response);
@@ -48,11 +47,10 @@ public class AgentService {
 
     /**
      * 智能设备诊断
-     * 分析设备状态并给出维护建议
      */
     public Map<String, Object> diagnoseDevice(Map<String, Object> deviceData) {
         String prompt = buildDeviceDiagnosisPrompt(deviceData);
-        String response = callAI(prompt);
+        String response = callAI(prompt, "device");
 
         Map<String, Object> result = new HashMap<>();
         result.put("diagnosis", response);
@@ -62,11 +60,10 @@ public class AgentService {
 
     /**
      * 智能任务规划
-     * 根据当前状态生成农事任务建议
      */
     public Map<String, Object> planTasks(Map<String, Object> context) {
         String prompt = buildTaskPlanningPrompt(context);
-        String response = callAI(prompt);
+        String response = callAI(prompt, "task");
 
         Map<String, Object> result = new HashMap<>();
         result.put("plan", response);
@@ -76,11 +73,10 @@ public class AgentService {
 
     /**
      * 智能问答
-     * 回答农场管理相关问题
      */
     public Map<String, Object> askQuestion(String question) {
         String systemPrompt = "你是一个智慧农场管理专家，专门回答关于农业种植、设备管理、环境控制等方面的问题。请用专业但易懂的语言回答。";
-        String response = callAI(systemPrompt + "\n\n用户问题：" + question);
+        String response = callAI(systemPrompt + "\n\n用户问题：" + question, "qa");
 
         Map<String, Object> result = new HashMap<>();
         result.put("answer", response);
@@ -90,11 +86,10 @@ public class AgentService {
 
     /**
      * 智能预警分析
-     * 分测潜在风险并生成预警
      */
     public Map<String, Object> analyzeAlerts(Map<String, Object> alertData) {
         String prompt = buildAlertAnalysisPrompt(alertData);
-        String response = callAI(prompt);
+        String response = callAI(prompt, "alert");
 
         Map<String, Object> result = new HashMap<>();
         result.put("alertAnalysis", response);
@@ -105,9 +100,9 @@ public class AgentService {
     /**
      * 调用 AI API
      */
-    private String callAI(String prompt) {
+    private String callAI(String prompt, String type) {
         if (apiKey == null || apiKey.isEmpty()) {
-            return generateFallbackResponse(prompt);
+            return generateFallbackResponse(type, prompt);
         }
 
         try {
@@ -145,38 +140,48 @@ public class AgentService {
     /**
      * 生成备用响应（当 API 不可用时）
      */
-    private String generateFallbackResponse(String prompt) {
-        if (prompt.contains("环境")) {
-            return "【智能分析】\n" +
-                "根据当前环境数据分析：\n" +
-                "1. 温湿度处于正常范围，建议保持当前通风设置\n" +
-                "2. 光照充足，适合大多数作物生长\n" +
-                "3. 建议定期检查土壤湿度，确保灌溉系统正常工作\n" +
-                "4. 注意季节变化对环境参数的影响，及时调整控制策略";
-        } else if (prompt.contains("设备")) {
-            return "【设备诊断】\n" +
-                "设备运行状态分析：\n" +
-                "1. 设备整体运行正常，无明显故障迹象\n" +
-                "2. 建议定期进行预防性维护\n" +
-                "3. 注意设备运行时长，避免超负荷运行\n" +
-                "4. 检查设备连接状态，确保通信正常";
-        } else if (prompt.contains("任务")) {
-            return "【任务规划建议】\n" +
-                "根据当前农场状态，建议执行以下任务：\n" +
-                "1. 巡检各区域设备运行状态\n" +
-                "2. 检查作物生长情况，记录异常\n" +
-                "3. 维护灌溉系统，确保水量充足\n" +
-                "4. 更新环境监测数据，调整控制参数\n" +
-                "5. 记录农事操作日志，便于追溯";
-        } else if (prompt.contains("预警")) {
-            return "【预警分析】\n" +
-                "当前预警分析结果：\n" +
-                "1. 系统运行稳定，暂无重大风险\n" +
-                "2. 建议关注环境数据波动，及时调整\n" +
-                "3. 定期检查设备状态，预防故障发生\n" +
-                "4. 保持与管理人员的沟通，确保信息畅通";
+    private String generateFallbackResponse(String type, String prompt) {
+        switch (type) {
+            case "environment":
+                return "【环境分析】\n" +
+                    "根据当前环境数据分析：\n" +
+                    "1. 温湿度处于正常范围，建议保持当前通风设置\n" +
+                    "2. 光照充足，适合大多数作物生长\n" +
+                    "3. 建议定期检查土壤湿度，确保灌溉系统正常工作\n" +
+                    "4. 注意季节变化对环境参数的影响，及时调整控制策略";
+            case "device":
+                return "【设备诊断】\n" +
+                    "设备运行状态分析：\n" +
+                    "1. 设备整体运行正常，无明显故障迹象\n" +
+                    "2. 建议定期进行预防性维护\n" +
+                    "3. 注意设备运行时长，避免超负荷运行\n" +
+                    "4. 检查设备连接状态，确保通信正常";
+            case "task":
+                return "【任务规划建议】\n" +
+                    "根据当前农场状态，建议执行以下任务：\n" +
+                    "1. 巡检各区域设备运行状态\n" +
+                    "2. 检查作物生长情况，记录异常\n" +
+                    "3. 维护灌溉系统，确保水量充足\n" +
+                    "4. 更新环境监测数据，调整控制参数\n" +
+                    "5. 记录农事操作日志，便于追溯";
+            case "alert":
+                return "【预警分析】\n" +
+                    "当前预警分析结果：\n" +
+                    "1. 系统运行稳定，暂无重大风险\n" +
+                    "2. 建议关注环境数据波动，及时调整\n" +
+                    "3. 定期检查设备状态，预防故障发生\n" +
+                    "4. 保持与管理人员的沟通，确保信息畅通";
+            case "qa":
+                return "【智能问答】\n" +
+                    "感谢您的提问！当前 AI 服务暂时不可用（未配置 API Key），以下是通用建议：\n" +
+                    "1. 请确保农场环境数据采集正常，温湿度在合理范围内\n" +
+                    "2. 定期检查灌溉、通风、补光等设备的运行状态\n" +
+                    "3. 关注病虫害预警，及时采取防治措施\n" +
+                    "4. 合理安排农事任务，做好生产记录\n" +
+                    "如需使用 AI 智能问答，请在配置文件中设置 MIMO_API_KEY";
+            default:
+                return "AI 分析服务暂时不可用，请稍后重试。";
         }
-        return "AI 分析服务暂时不可用，请稍后重试。";
     }
 
     private String buildEnvironmentAnalysisPrompt(Map<String, Object> envData) {
