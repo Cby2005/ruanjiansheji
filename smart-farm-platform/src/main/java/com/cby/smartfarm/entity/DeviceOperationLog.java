@@ -37,8 +37,8 @@ public class DeviceOperationLog {
     @Schema(description = "操作人")
     private String operator;
 
-    @Column(length = 20)
-    @Schema(description = "执行结果：SUCCESS/FAILED")
+    @Column(length = 50)
+    @Schema(description = "执行结果：如 STANDBY → RUNNING")
     private String result;
 
     @Column(name = "operation_time")
