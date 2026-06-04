@@ -290,6 +290,12 @@ const AIAssistant = {
             setTimeout(() => message.value = null, 3000);
         };
 
+        // 清理AI返回内容中的Markdown符号
+        const cleanResult = (text) => {
+            if (!text) return '';
+            return text.replace(/[*#]/g, '');
+        };
+
         const getAuthHeaders = () => ({
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + localStorage.getItem('token')
@@ -305,7 +311,7 @@ const AIAssistant = {
                 });
                 const data = await response.json();
                 if (data.code === 200) {
-                    result.value = data.data.analysis;
+                    result.value = cleanResult(data.data.analysis);
                 } else {
                     showMessage(data.message, 'error');
                 }
@@ -326,7 +332,7 @@ const AIAssistant = {
                 });
                 const data = await response.json();
                 if (data.code === 200) {
-                    result.value = data.data.diagnosis;
+                    result.value = cleanResult(data.data.diagnosis);
                 } else {
                     showMessage(data.message, 'error');
                 }
@@ -347,7 +353,7 @@ const AIAssistant = {
                 });
                 const data = await response.json();
                 if (data.code === 200) {
-                    result.value = data.data.plan;
+                    result.value = cleanResult(data.data.plan);
                 } else {
                     showMessage(data.message, 'error');
                 }
@@ -368,7 +374,7 @@ const AIAssistant = {
                 });
                 const data = await response.json();
                 if (data.code === 200) {
-                    result.value = data.data.alertAnalysis;
+                    result.value = cleanResult(data.data.alertAnalysis);
                 } else {
                     showMessage(data.message, 'error');
                 }
@@ -390,7 +396,7 @@ const AIAssistant = {
                 });
                 const data = await response.json();
                 if (data.code === 200) {
-                    result.value = data.data.answer;
+                    result.value = cleanResult(data.data.answer);
                 } else {
                     showMessage(data.message, 'error');
                 }
