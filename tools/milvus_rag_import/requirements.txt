@@ -1,0 +1,6 @@
+pymilvus
+pandas
+requests
+python-dotenv
+tqdm
+numpy

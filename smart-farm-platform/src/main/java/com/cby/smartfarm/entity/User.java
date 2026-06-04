@@ -30,4 +30,19 @@ public class User {
     @Column(nullable = false, length = 20)
     @Schema(description = "角色：ADMIN/TECHNICIAN/OPERATOR/VIEWER")
     private String role = "VIEWER";
+
+    @Column(nullable = false)
+    @Schema(description = "账号是否启用")
+    private Boolean enabled = true;
+
+    @Column(name = "created_at")
+    @Schema(description = "创建时间")
+    private java.time.LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = java.time.LocalDateTime.now();
+        }
+    }
 }

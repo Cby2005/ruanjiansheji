@@ -1,6 +1,9 @@
 package com.cby.smartfarm.controller;
 
 import com.cby.smartfarm.common.Result;
+import com.cby.smartfarm.agent.decision.AgentDecisionService;
+import com.cby.smartfarm.agent.decision.dto.MilvusAgentDecisionRequest;
+import com.cby.smartfarm.agent.decision.dto.MilvusAgentDecisionResponse;
 import com.cby.smartfarm.service.AgentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,6 +23,7 @@ import java.util.Map;
 public class AgentController {
 
     private final AgentService agentService;
+    private final AgentDecisionService agentDecisionService;
 
     @PostMapping("/analyze-environment")
     @Operation(summary = "智能环境分析", description = "分析环境数据并给出专业建议")
@@ -29,6 +33,12 @@ public class AgentController {
         } catch (Exception e) {
             return Result.fail(e.getMessage());
         }
+    }
+
+    @PostMapping("/decision")
+    @Operation(summary = "Milvus RAG + 知识图谱多 Agent 智能决策")
+    public Result<MilvusAgentDecisionResponse> decision(@RequestBody MilvusAgentDecisionRequest request) {
+        return Result.success(agentDecisionService.decide(request));
     }
 
     @PostMapping("/diagnose-device")

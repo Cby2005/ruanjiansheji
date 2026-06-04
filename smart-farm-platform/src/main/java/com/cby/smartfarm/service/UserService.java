@@ -142,6 +142,22 @@ public class UserService {
     }
 
     /**
+     * 切换用户启用/禁用状态
+     */
+    @Transactional
+    public Map<String, Object> toggleUserStatus(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("用户不存在: " + id));
+
+        user.setEnabled(!user.getEnabled());
+        userRepository.save(user);
+
+        String status = user.getEnabled() ? "启用" : "禁用";
+        log.info("管理员{}用户成功: {}", status, user.getUsername());
+        return convertToMap(user);
+    }
+
+    /**
      * 获取用户统计信息
      */
     public Map<String, Object> getUserStats() {
@@ -169,6 +185,8 @@ public class UserService {
         map.put("id", user.getId());
         map.put("username", user.getUsername());
         map.put("role", user.getRole());
+        map.put("enabled", user.getEnabled());
+        map.put("createdAt", user.getCreatedAt() != null ? user.getCreatedAt().toString().replace("T", " ") : "");
         return map;
     }
 }

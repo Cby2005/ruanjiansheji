@@ -2,27 +2,28 @@ const UserProfile = {
     template: `
         <div style="max-width: 700px; margin: 0 auto;">
             <!-- 个人资料卡片 -->
-            <el-card shadow="hover" style="margin-bottom: 20px;">
-                <div style="background: linear-gradient(135deg, #67c23a, #409eff); height: 120px; margin: -20px -20px 0; border-radius: 4px 4px 0 0;"></div>
-                <div style="padding: 0 0 20px; margin-top: -40px;">
+            <el-card shadow="never" style="margin-bottom: 16px; border-radius: 8px;">
+                <div class="profile-header">
                     <div style="display: flex; align-items: flex-end;">
                         <div style="position: relative; display: inline-block;">
-                            <el-avatar :size="96" :style="{ backgroundColor: getRoleColor(user.role), border: '4px solid #fff', boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }">
+                            <el-avatar :size="80" :style="{ backgroundColor: getRoleColor(user.role), border: '3px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }">
                                 <img v-if="avatarUrl" :src="avatarUrl" style="width: 100%; height: 100%; object-fit: cover;" />
-                                <i v-else class="fas fa-user" style="font-size: 36px;"></i>
+                                <i v-else class="fas fa-user" style="font-size: 30px;"></i>
                             </el-avatar>
-                            <label style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); border-radius: 50%; cursor: pointer; opacity: 0; transition: opacity 0.3s;"
+                            <label style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.45); border-radius: 50%; cursor: pointer; opacity: 0; transition: opacity 0.2s;"
                                 onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
-                                <i class="fas fa-camera" style="color: #fff; font-size: 20px;"></i>
+                                <i class="fas fa-camera" style="color: #fff; font-size: 16px;"></i>
                                 <input type="file" accept="image/*" style="display: none;" @change="onAvatarChange" />
                             </label>
                         </div>
-                        <div style="margin-left: 20px; padding-bottom: 5px;">
-                            <h2 style="margin: 0; font-size: 22px; color: #303133;">{{ user.username }}</h2>
-                            <el-tag :type="getRoleTagType(user.role)" size="small" style="margin-top: 5px;">{{ getRoleName(user.role) }}</el-tag>
+                        <div style="margin-left: 16px; padding-bottom: 4px;">
+                            <h2 style="margin: 0; font-size: 18px; color: #303133;">{{ user.username }}</h2>
+                            <el-tag :type="getRoleTagType(user.role)" size="small" style="margin-top: 4px;">{{ getRoleName(user.role) }}</el-tag>
                         </div>
                     </div>
-                    <p style="color: #909399; font-size: 13px; margin-top: 10px;">
+                </div>
+                <div style="padding: 16px 20px;">
+                    <p style="color: #909399; font-size: 13px; margin: 0;">
                         <i class="fas fa-info-circle" style="margin-right: 4px;"></i>鼠标悬停头像可更换
                     </p>
                 </div>

@@ -1,6 +1,7 @@
 package com.cby.smartfarm.weather;
 
 import com.cby.smartfarm.common.Result;
+import com.cby.smartfarm.service.CityLocationService;
 import com.cby.smartfarm.weather.dto.WeatherCurrentDTO;
 import com.cby.smartfarm.weather.dto.WeatherDecisionDTO;
 import com.cby.smartfarm.weather.dto.WeatherForecastDTO;
@@ -23,6 +24,7 @@ import java.util.List;
 public class WeatherController {
 
     private final WeatherService weatherService;
+    private final CityLocationService cityLocationService;
 
     @GetMapping("/current")
     @Operation(summary = "查询当前天气")
@@ -60,5 +62,13 @@ public class WeatherController {
             @RequestParam(required = false) Double latitude,
             @RequestParam(required = false) Double longitude) {
         return Result.success(weatherService.decisionInput(farmId, latitude, longitude));
+    }
+
+    @GetMapping("/decision-input/by-city")
+    @Operation(summary = "根据城市名称生成天气决策输入")
+    public Result<WeatherDecisionDTO> decisionInputByCity(@RequestParam String cityName) {
+        var loc = cityLocationService.findByName(cityName)
+                .orElseThrow(() -> new RuntimeException("未找到城市: " + cityName));
+        return Result.success(weatherService.decisionInput(1L, loc.getLatitude(), loc.getLongitude()));
     }
 }

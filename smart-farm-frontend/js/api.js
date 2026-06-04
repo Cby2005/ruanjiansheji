@@ -204,6 +204,99 @@ const mockRoutes = {
         device.state = 'STANDBY';
         return { code: 200, data: device.deviceName + ' 校准完成' };
     },
+    'POST /api/devices': (body) => {
+        if (mockStore.devices.find(d => d.deviceCode === body.deviceCode)) {
+            return { code: 400, message: '设备编号已存在' };
+        }
+        const device = {
+            id: mockStore.devices.length + 1,
+            deviceCode: body.deviceCode,
+            deviceName: body.deviceName,
+            deviceType: body.deviceType,
+            area: body.area || '',
+            state: body.state || 'STANDBY',
+            online: body.online !== false
+        };
+        mockStore.devices.unshift(device);
+        return { code: 200, data: device };
+    },
+    'PUT /api/devices/*': (body, url) => {
+        const code = url.match(/devices\/(.+)/)?.[1];
+        const device = mockStore.devices.find(d => d.deviceCode === code);
+        if (!device) return { code: 404, message: '设备不存在' };
+        Object.assign(device, body, { deviceCode: code });
+        return { code: 200, data: device };
+    },
+    'DELETE /api/devices/*': (body, url) => {
+        const code = url.match(/devices\/(.+)/)?.[1];
+        mockStore.devices = mockStore.devices.filter(d => d.deviceCode !== code);
+        return { code: 200, data: '删除成功' };
+    },
+    'POST /api/devices/remote-control': (body, url, params) => {
+        const username = params?.username || 'viewer';
+        const allowed = ['admin', 'tech', 'operator'].includes(username);
+        return { code: 200, data: {
+            username,
+            deviceCode: params?.deviceCode,
+            action: params?.action,
+            result: allowed ? '代理校验通过，远程控制已执行' : '代理校验失败，当前用户无远程控制权限',
+            description: 'RemoteDeviceServiceProxy 在调用真实服务前进行权限验证和日志审计'
+        } };
+    },
+    'GET /api/devices/decorator-demo/*': (params, url) => {
+        const code = url.match(/decorator-demo\/(.+)/)?.[1];
+        const device = mockStore.devices.find(d => d.deviceCode === code) || mockStore.devices[0];
+        return { code: 200, data: {
+            pattern: 'Decorator',
+            device: device?.deviceName || code,
+            description: 'BasicSmartDevice + EnergyMonitorDecorator + RuntimeStatisticsDecorator + FaultPredictionDecorator',
+            result: '能耗 0.42kWh，累计运行 36.5 小时，故障风险低'
+        } };
+    },
+
+    // ---- 设计模式演示 ----
+    'GET /api/sensors/collect/*': (params, url) => {
+        const type = url.match(/collect\/(.+)/)?.[1] || 'soil';
+        return { code: 200, data: {
+            sensorType: type,
+            soilTemperature: 22 + Math.random() * 4,
+            soilHumidity: 45 + Math.random() * 25,
+            airTemperature: 24 + Math.random() * 8,
+            airHumidity: 55 + Math.random() * 20,
+            lightIntensity: 3000 + Math.random() * 4000,
+            co2: 420 + Math.random() * 300,
+            pestCount: Math.floor(Math.random() * 30)
+        } };
+    },
+    'GET /api/sensors/actuator-demo/*': (params, url) => {
+        const type = url.match(/actuator-demo\/(.+)/)?.[1] || 'irrigation';
+        return { code: 200, data: { pattern: 'Factory Method', factory: 'ActuatorFactory', type, action: params?.action || 'START', message: '执行器已通过工厂创建并执行动作' } };
+    },
+    'GET /api/strategy/demo': (params) => {
+        const irrigation = params?.crop === 'cucumber' ? '喷灌策略' : params?.crop === 'strawberry' ? '微喷策略' : '滴灌策略';
+        const lighting = params?.stage === 'flowering' ? '花期补光策略' : params?.stage === 'fruiting' ? '果期补光策略' : '育苗补光策略';
+        const ventilation = params?.condition === 'high_temp' ? '强制通风策略' : params?.condition === 'high_humidity' ? '循环通风策略' : '自然通风策略';
+        return { code: 200, data: { 作物: params?.crop, 生长阶段: params?.stage, 环境条件: params?.condition || 'normal', 灌溉策略: irrigation, 补光策略: lighting, 通风策略: ventilation } };
+    },
+    'POST /api/commands/add': (body, url, params) => {
+        mockStore.commandQueue = mockStore.commandQueue || [];
+        mockStore.commandQueue.push(params?.commandType || 'OPEN_IRRIGATION');
+        return { code: 200, data: { addedCommand: params?.commandType, queueSize: mockStore.commandQueue.length } };
+    },
+    'POST /api/commands/execute-all': () => {
+        const executed = mockStore.commandQueue || [];
+        mockStore.executedCommands = (mockStore.executedCommands || []).concat(executed);
+        mockStore.commandQueue = [];
+        return { code: 200, data: { executedResults: executed.map(c => '已执行 ' + c), description: '命令队列已依次执行' } };
+    },
+    'POST /api/commands/undo-last': () => {
+        mockStore.executedCommands = mockStore.executedCommands || [];
+        const last = mockStore.executedCommands.pop();
+        return { code: 200, data: { undoResult: last ? '已撤销 ' + last : '无可撤销命令' } };
+    },
+    'GET /api/commands/queue-status': () => {
+        return { code: 200, data: { queueSize: (mockStore.commandQueue || []).length, pattern: 'Singleton + Command' } };
+    },
 
     // ---- 统计数据 ----
     'GET /api/statistics/overview': () => {
@@ -352,6 +445,70 @@ const mockRoutes = {
     'GET /api/system/health': () => {
         return { code: 200, data: { status: 'UP', mode: 'mock', timestamp: Date.now() } };
     },
+    'GET /api/system/singletons': () => {
+        return { code: 200, data: {
+            ConfigCenter: { soilHumidityMin: 40, lightIntensityMin: 300, co2Max: 1000, airTemperatureMax: 32, pestCountMax: 20 },
+            CommandQueueManager: { queueSize: (mockStore.commandQueue || []).length },
+            LogRecorder: { recentLogs: ['Create device DEMO-001', 'Command queued OPEN_IRRIGATION', 'Observer notified IrrigationObserver'] },
+            description: 'ConfigCenter、LogRecorder、CommandQueueManager 均采用单例模式'
+        } };
+    },
+    'POST /api/system/events/simulate': (body) => {
+        return { code: 200, data: {
+            eventType: body?.eventType || 'DEVICE_FAULT',
+            level: body?.level || 'HIGH',
+            message: body?.message || '模拟异常事件',
+            handled: true,
+            processLog: ['LocalControllerHandler 已检查', 'RegionControllerHandler 已升级', 'CentralPlatformHandler 已生成预警', 'AdminNotifyHandler 已通知管理员']
+        } };
+    },
+    'POST /api/rag/search': (body) => {
+        return { code: 200, data: {
+            query: body?.query || '',
+            topK: body?.topK || 5,
+            warning: '当前使用前端 Mock RAG，仅用于后端不可用时演示页面流程。',
+            results: [
+                {
+                    chunkId: 'mock_agri_001_0001',
+                    articleId: 'mock_agri_001',
+                    source: 'agri_cn',
+                    title: '小麦赤霉病防控技术',
+                    sourceUrl: 'https://www.agri.cn/',
+                    category: '病虫害防治',
+                    publishDate: '2026-05-01',
+                    score: 0.86,
+                    chunkText: '小麦赤霉病在高温高湿条件下风险升高，应结合墒情适量灌溉，加强田间巡查和综合防控。',
+                    entities: ['小麦', '赤霉病', '高温高湿']
+                }
+            ]
+        } };
+    },
+    'POST /api/rag/hybrid-search': (body) => {
+        return { code: 200, data: {
+            query: body?.query || '',
+            ragResults: [],
+            kgEvidence: [{ source: '高温高湿', relation: 'INCREASES_RISK_OF', target: '赤霉病' }]
+        } };
+    },
+    'POST /api/agent/decision': (body) => {
+        return { code: 200, data: {
+            riskLevel: '中高风险',
+            summary: '当前土壤湿度偏低，同时高温高湿可能增加小麦病害风险，建议适量灌溉并加强巡查。',
+            agentSteps: [
+                { agentName: '环境监测Agent', result: '土壤湿度18%，低于适宜范围，当前温度31℃、湿度82%，需要关注缺水和病害风险。' },
+                { agentName: '病虫害Agent', result: '根据知识图谱，高温高湿条件可能增加小麦赤霉病等病害风险。' },
+                { agentName: '农技知识Agent', result: '检索到相关农技资料，建议结合墒情适量灌溉，并加强病虫害巡查。' },
+                { agentName: '农药安全Agent', result: '当前系统未检索到可靠登记信息，不生成具体药剂建议。' },
+                { agentName: '综合决策Agent', result: '建议适量灌溉、加强通风、加强病虫害巡查。' }
+            ],
+            suggestions: ['适量灌溉', '加强田间通风', '加强病虫害巡查', '用药前核对农药登记信息'],
+            ragEvidence: [
+                { title: '小麦赤霉病防控技术', source: 'agri_cn', sourceUrl: 'https://www.agri.cn/', score: 0.86, chunkText: '小麦赤霉病在高温高湿条件下风险升高，应结合墒情适量灌溉，加强田间巡查。' }
+            ],
+            kgEvidence: [{ source: '高温高湿', relation: 'INCREASES_RISK_OF', target: '赤霉病' }],
+            pesticideSafetyNotice: '具体药剂、浓度、施用次数和安全间隔期应以农药标签、登记信息和当地农技部门指导为准。'
+        } };
+    },
     'POST /api/system/init-devices': () => {
         return { code: 200, data: '设备初始化完成' };
     },
@@ -466,6 +623,9 @@ api.interceptors.response.use(
 const deviceApi = {
     getList: () => api.get('/api/devices/list'),
     getByCode: (code) => api.get('/api/devices/' + code),
+    create: (device) => api.post('/api/devices', device),
+    update: (code, device) => api.put('/api/devices/' + code, device),
+    delete: (code) => api.delete('/api/devices/' + code),
     start: (code) => api.post('/api/devices/' + code + '/start'),
     stop: (code) => api.post('/api/devices/' + code + '/stop'),
     markFault: (code) => api.post('/api/devices/' + code + '/fault'),
@@ -494,6 +654,7 @@ const systemApi = {
     initDevices: () => api.post('/api/system/init-devices'),
     initUsers: () => api.post('/api/system/init-users'),
     health: () => api.get('/api/system/health'),
+    singletons: () => api.get('/api/system/singletons'),
     simulateEvent: (event) => api.post('/api/system/events/simulate', event)
 };
 
@@ -504,14 +665,22 @@ const taskApi = {
 };
 
 const commandApi = {
-    send: (command) => api.post('/api/commands/send', command),
+    add: (params) => api.post('/api/commands/add', null, { params }),
+    executeAll: () => api.post('/api/commands/execute-all'),
+    undoLast: () => api.post('/api/commands/undo-last'),
     getQueueStatus: () => api.get('/api/commands/queue-status')
 };
 
 const strategyApi = {
+    demo: (params) => api.get('/api/strategy/demo', { params }),
     executeIrrigation: (data) => api.post('/api/strategies/irrigation', data),
     executeVentilation: (data) => api.post('/api/strategies/ventilation', data),
     executeLighting: (data) => api.post('/api/strategies/lighting', data)
+};
+
+const sensorApi = {
+    collect: (type) => api.get('/api/sensors/collect/' + type),
+    actuatorDemo: (type, action = 'START') => api.get('/api/sensors/actuator-demo/' + type + '?action=' + action)
 };
 
 const knowledgeGraphApi = {
@@ -528,6 +697,25 @@ const weatherApi = {
     decisionInput: (params) => api.get('/api/weather/decision-input', { params })
 };
 window.weatherApi = weatherApi;
+
+const ragApi = {
+    search: (data) => api.post('/api/rag/search', data),
+    hybridSearch: (data) => api.post('/api/rag/hybrid-search', data)
+};
+
+const agentDecisionApi = {
+    decision: (data) => api.post('/api/agent/decision', data)
+};
+
+window.deviceApi = deviceApi;
+window.environmentApi = environmentApi;
+window.statisticsApi = statisticsApi;
+window.systemApi = systemApi;
+window.commandApi = commandApi;
+window.strategyApi = strategyApi;
+window.sensorApi = sensorApi;
+window.ragApi = ragApi;
+window.agentDecisionApi = agentDecisionApi;
 
 // 导出 Mock 存储，供调试使用
 window.mockStore = mockStore;

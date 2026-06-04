@@ -1,101 +1,77 @@
 const AlertCenter = {
     template: `
         <div>
+            <!-- 页面头部 -->
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1 class="page-header-title">预警中心</h1>
+                    <p class="page-header-subtitle">查看设备故障、环境异常、虫情预警等告警信息</p>
+                </div>
+            </div>
+
             <!-- 预警统计 -->
-            <el-row :gutter="20" style="margin-bottom: 20px;">
-                <el-col :span="6">
-                    <el-card shadow="hover" :body-style="{ padding: '20px' }">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-size: 28px; font-weight: bold; color: #f56c6c;">{{ alertStats.critical }}</div>
-                                <div style="font-size: 13px; color: #909399; margin-top: 5px;">严重预警</div>
+            <el-row :gutter="16" style="margin-bottom: 16px;">
+                <el-col :xs="12" :sm="6" v-for="stat in alertStatCards" :key="stat.label">
+                    <div class="stat-card" style="margin-bottom: 16px;">
+                        <div class="stat-card-inner">
+                            <div class="stat-card-info">
+                                <div class="stat-card-value" :style="{ color: stat.color }">{{ stat.value }}</div>
+                                <div class="stat-card-label">{{ stat.label }}</div>
                             </div>
-                            <i class="fas fa-exclamation-circle" style="font-size: 32px; color: #f56c6c; opacity: 0.6;"></i>
+                            <i :class="stat.icon" class="stat-card-icon" :style="{ color: stat.color }"></i>
                         </div>
-                    </el-card>
-                </el-col>
-                <el-col :span="6">
-                    <el-card shadow="hover" :body-style="{ padding: '20px' }">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-size: 28px; font-weight: bold; color: #e6a23c;">{{ alertStats.warning }}</div>
-                                <div style="font-size: 13px; color: #909399; margin-top: 5px;">一般预警</div>
-                            </div>
-                            <i class="fas fa-exclamation-triangle" style="font-size: 32px; color: #e6a23c; opacity: 0.6;"></i>
-                        </div>
-                    </el-card>
-                </el-col>
-                <el-col :span="6">
-                    <el-card shadow="hover" :body-style="{ padding: '20px' }">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-size: 28px; font-weight: bold; color: #409eff;">{{ alertStats.info }}</div>
-                                <div style="font-size: 13px; color: #909399; margin-top: 5px;">提示信息</div>
-                            </div>
-                            <i class="fas fa-info-circle" style="font-size: 32px; color: #409eff; opacity: 0.6;"></i>
-                        </div>
-                    </el-card>
-                </el-col>
-                <el-col :span="6">
-                    <el-card shadow="hover" :body-style="{ padding: '20px' }">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-size: 28px; font-weight: bold; color: #67c23a;">{{ alertStats.resolved }}</div>
-                                <div style="font-size: 13px; color: #909399; margin-top: 5px;">已处理</div>
-                            </div>
-                            <i class="fas fa-check-circle" style="font-size: 32px; color: #67c23a; opacity: 0.6;"></i>
-                        </div>
-                    </el-card>
+                    </div>
                 </el-col>
             </el-row>
 
-            <!-- 预警列表 -->
-            <el-card shadow="hover">
-                <template #header>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: bold;">预警记录</span>
-                        <el-form :inline="true" style="margin-bottom: 0;">
-                            <el-form-item label="预警级别" style="margin-bottom: 0;">
-                                <el-select v-model="queryLevel" placeholder="全部" clearable size="default" style="width: 120px;">
-                                    <el-option label="严重" value="CRITICAL"></el-option>
-                                    <el-option label="一般" value="WARNING"></el-option>
-                                    <el-option label="提示" value="INFO"></el-option>
-                                </el-select>
-                            </el-form-item>
-                            <el-form-item style="margin-bottom: 0;">
-                                <el-button type="primary" size="default" @click="loadAlerts"><i class="fas fa-search" style="margin-right: 4px;"></i>查询</el-button>
-                            </el-form-item>
-                        </el-form>
-                    </div>
-                </template>
+            <!-- 查询栏 -->
+            <div class="query-bar">
+                <el-form :inline="true" style="margin-bottom: 0;">
+                    <el-form-item label="预警级别" style="margin-bottom: 0;">
+                        <el-select v-model="queryLevel" placeholder="全部" clearable size="default" style="width: 120px;">
+                            <el-option label="严重" value="CRITICAL"></el-option>
+                            <el-option label="一般" value="WARNING"></el-option>
+                            <el-option label="提示" value="INFO"></el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item style="margin-bottom: 0;">
+                        <el-button type="primary" size="default" @click="loadAlerts"><i class="fas fa-search" style="margin-right: 4px;"></i>查询</el-button>
+                    </el-form-item>
+                </el-form>
+            </div>
 
-                <el-table :data="filteredAlerts" stripe border style="width: 100%;" v-loading="loading">
-                    <el-table-column prop="id" label="ID" width="70"></el-table-column>
-                    <el-table-column prop="alertLevel" label="级别" width="100">
-                        <template #default="{ row }">
-                            <el-tag :type="getLevelType(row.alertLevel)" size="small">{{ getLevelText(row.alertLevel) }}</el-tag>
-                        </template>
-                    </el-table-column>
-                    <el-table-column prop="alertType" label="预警类型" width="150"></el-table-column>
-                    <el-table-column prop="message" label="详细描述"></el-table-column>
-                    <el-table-column prop="createTime" label="预警时间" width="180"></el-table-column>
-                    <el-table-column prop="handled" label="状态" width="100">
-                        <template #default="{ row }">
-                            <el-tag :type="row.handled ? 'success' : 'danger'" size="small">
-                                {{ row.handled ? '已处理' : '未处理' }}
-                            </el-tag>
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="操作" width="120" fixed="right">
-                        <template #default="{ row }">
-                            <el-button v-if="!row.handled" type="success" size="small" link @click="resolveAlert(row)">
-                                <i class="fas fa-check" style="margin-right: 4px;"></i>处理
-                            </el-button>
-                            <span v-else style="color: #909399; font-size: 12px;">已处理</span>
-                        </template>
-                    </el-table-column>
-                </el-table>
-            </el-card>
+            <!-- 预警列表 -->
+            <div class="content-card">
+                <div class="content-card-body">
+                    <el-table :data="filteredAlerts" stripe border style="width: 100%;" v-loading="loading">
+                        <el-table-column prop="id" label="ID" width="70"></el-table-column>
+                        <el-table-column prop="alertLevel" label="级别" width="100">
+                            <template #default="{ row }">
+                                <el-tag :type="getLevelType(row.alertLevel)" size="small">{{ getLevelText(row.alertLevel) }}</el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="alertType" label="预警类型" width="150"></el-table-column>
+                        <el-table-column prop="message" label="详细描述"></el-table-column>
+                        <el-table-column prop="createTime" label="预警时间" width="180"></el-table-column>
+                        <el-table-column prop="handled" label="状态" width="100">
+                            <template #default="{ row }">
+                                <el-tag :type="row.handled ? 'success' : 'danger'" size="small">
+                                    {{ row.handled ? '已处理' : '未处理' }}
+                                </el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="120" fixed="right">
+                            <template #default="{ row }">
+                                <el-button v-if="!row.handled && canHandle" type="success" size="small" link @click="resolveAlert(row)">
+                                    <i class="fas fa-check" style="margin-right: 4px;"></i>处理
+                                </el-button>
+                                <span v-else-if="row.handled" style="color: #909399; font-size: 12px;">已处理</span>
+                                <span v-else style="color: #909399; font-size: 12px;">无权限</span>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+            </div>
         </div>
     `,
 
@@ -106,6 +82,19 @@ const AlertCenter = {
         const loading = Vue.ref(false);
 
         const alertStats = Vue.ref({ critical: 0, warning: 0, info: 0, resolved: 0 });
+
+        const alertStatCards = Vue.computed(() => [
+            { label: '严重预警', value: alertStats.value.critical, icon: 'fas fa-exclamation-circle', color: '#f56c6c' },
+            { label: '一般预警', value: alertStats.value.warning, icon: 'fas fa-exclamation-triangle', color: '#e6a23c' },
+            { label: '提示信息', value: alertStats.value.info, icon: 'fas fa-info-circle', color: '#409eff' },
+            { label: '已处理', value: alertStats.value.resolved, icon: 'fas fa-check-circle', color: '#67c23a' }
+        ]);
+
+        // 权限判断：观察者(VIEWER)不能处理预警，ADMIN/TECHNICIAN/OPERATOR可以
+        const userRole = Vue.computed(() => {
+            try { return JSON.parse(localStorage.getItem('user') || '{}').role || 'VIEWER'; } catch { return 'VIEWER'; }
+        });
+        const canHandle = Vue.computed(() => ['ADMIN', 'TECHNICIAN', 'OPERATOR'].includes(userRole.value));
 
         const getHeaders = () => ({
             'Content-Type': 'application/json',
@@ -167,6 +156,6 @@ const AlertCenter = {
 
         Vue.onMounted(() => loadAlerts());
 
-        return { queryLevel, alerts, alertStats, filteredAlerts, loading, getLevelType, getLevelText, resolveAlert, loadAlerts };
+        return { queryLevel, alerts, alertStats, alertStatCards, filteredAlerts, loading, getLevelType, getLevelText, resolveAlert, loadAlerts, canHandle };
     }
 };

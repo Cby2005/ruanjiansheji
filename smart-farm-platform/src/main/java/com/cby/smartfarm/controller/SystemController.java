@@ -3,6 +3,9 @@ package com.cby.smartfarm.controller;
 import com.cby.smartfarm.common.Result;
 import com.cby.smartfarm.design.chain.ExceptionEvent;
 import com.cby.smartfarm.design.chain.impl.*;
+import com.cby.smartfarm.design.singleton.CommandQueueManager;
+import com.cby.smartfarm.design.singleton.ConfigCenter;
+import com.cby.smartfarm.design.singleton.LogRecorder;
 import com.cby.smartfarm.entity.AlertRecord;
 import com.cby.smartfarm.entity.Device;
 import com.cby.smartfarm.entity.User;
@@ -72,6 +75,27 @@ public class SystemController {
         info.put("status", "UP");
         info.put("application", "smart-farm-platform");
         info.put("version", "1.0.0");
+        return Result.success(info);
+    }
+
+    @GetMapping("/singletons")
+    @Operation(summary = "Singleton status")
+    public Result<Map<String, Object>> singletons() {
+        ConfigCenter config = ConfigCenter.getInstance();
+        CommandQueueManager queue = CommandQueueManager.getInstance();
+        LogRecorder recorder = LogRecorder.getInstance();
+
+        Map<String, Object> info = new LinkedHashMap<>();
+        info.put("ConfigCenter", Map.of(
+                "soilHumidityMin", config.getSoilHumidityMin(),
+                "lightIntensityMin", config.getLightIntensityMin(),
+                "co2Max", config.getCo2Max(),
+                "airTemperatureMax", config.getAirTemperatureMax(),
+                "pestCountMax", config.getPestCountMax()
+        ));
+        info.put("CommandQueueManager", Map.of("queueSize", queue.size()));
+        info.put("LogRecorder", Map.of("recentLogs", recorder.getRecentLogs(8)));
+        info.put("description", "ConfigCenter, LogRecorder and CommandQueueManager use singleton pattern.");
         return Result.success(info);
     }
 

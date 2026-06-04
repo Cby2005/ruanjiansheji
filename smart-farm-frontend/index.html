@@ -40,6 +40,104 @@
         .agent-workbench .metric-value.small { font-size: 15px; color: #303133; }
         .agent-workbench .list-title { font-size: 13px; font-weight: 700; margin-top: 8px; color: #303133; }
         .agent-workbench .compact-list { margin: 6px 0 0; padding-left: 18px; color: #606266; font-size: 13px; line-height: 1.7; }
+
+        /* ========== 智能决策中心 新样式 ========== */
+        .agent-hero {
+            background: linear-gradient(135deg, #f8faf8 0%, #eef6ee 50%, #e8f2e8 100%);
+            border-radius: 12px; padding: 32px 36px;
+            margin-bottom: 20px;
+            display: flex; align-items: center; justify-content: space-between; gap: 32px;
+            border: 1px solid #e0eadf;
+        }
+        .agent-hero-left { flex: 1; }
+        .agent-hero-title {
+            font-size: 26px; font-weight: 800; color: #1a2e1a; margin: 0 0 10px;
+        }
+        .agent-hero-desc {
+            font-size: 14px; line-height: 1.8; color: #5a6d5a; margin: 0 0 20px; max-width: 480px;
+        }
+        .agent-hero-right { flex-shrink: 0; }
+        .agent-stat-row { display: flex; gap: 12px; }
+        .agent-stat-card {
+            background: #fff; border-radius: 10px; padding: 16px 20px;
+            min-width: 100px; text-align: center;
+            border: 1px solid #e8eee7;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .agent-stat-label { font-size: 12px; color: #8a9a8a; margin-bottom: 6px; }
+        .agent-stat-value { font-size: 20px; font-weight: 700; color: #1a2e1a; }
+
+        .agent-panel {
+            background: #fff; border-radius: 10px;
+            border: 1px solid #e8eee7;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            padding: 0; margin-bottom: 16px;
+            overflow: hidden;
+        }
+        .agent-panel-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid #f0f4ef;
+        }
+        .agent-panel-title {
+            font-size: 15px; font-weight: 700; color: #1a2e1a;
+        }
+        .agent-panel > :not(.agent-panel-header) {
+            padding: 16px 20px;
+        }
+
+        .agent-steps { padding: 16px 20px !important; }
+        .agent-step {
+            display: flex; gap: 14px; padding: 12px 0;
+            border-bottom: 1px solid #f5f7f5;
+        }
+        .agent-step:last-child { border-bottom: none; }
+        .agent-step-num {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: #eef6ee; color: #3d8b3d;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700; flex-shrink: 0;
+        }
+        .agent-step-name { font-size: 14px; font-weight: 600; color: #1a2e1a; margin-bottom: 4px; }
+        .agent-step-result { font-size: 13px; color: #5a6d5a; line-height: 1.6; }
+
+        .agent-summary {
+            padding: 14px 16px; border-radius: 8px;
+            font-size: 14px; line-height: 1.6; margin-bottom: 14px;
+        }
+        .agent-summary.summary-ok { background: #f0f9eb; color: #3d8b3d; border: 1px solid #d4edcc; }
+        .agent-summary.summary-warn { background: #fdf6ec; color: #8a6d1b; border: 1px solid #f0dba0; }
+        .agent-summary.summary-danger { background: #fef0f0; color: #a83232; border: 1px solid #f5c6c6; }
+
+        .agent-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+        .agent-tag {
+            display: inline-flex; align-items: center;
+            padding: 6px 14px; border-radius: 6px;
+            background: #f5f9f5; color: #3d6b3d;
+            font-size: 13px; border: 1px solid #dfe8df;
+        }
+
+        .agent-notice {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 12px 16px; border-radius: 8px;
+            font-size: 13px; line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        .agent-notice:last-child { margin-bottom: 0; }
+        .agent-notice i { margin-top: 2px; flex-shrink: 0; }
+        .agent-notice.warn { background: #fdf6ec; color: #8a6d1b; border: 1px solid #f0dba0; }
+        .agent-notice.danger { background: #fef0f0; color: #a83232; border: 1px solid #f5c6c6; }
+
+        .agent-btn-row {
+            padding: 16px 20px !important;
+            display: flex; gap: 12px; flex-wrap: wrap;
+        }
+        .agent-btn-row .el-button { border-radius: 8px; }
+
+        @media (max-width: 992px) {
+            .agent-hero { flex-direction: column; text-align: center; }
+            .agent-hero-desc { max-width: 100%; }
+            .agent-stat-row { justify-content: center; flex-wrap: wrap; }
+        }
         .knowledge-graph-page .kg-metric-label { color: #909399; font-size: 13px; margin-bottom: 8px; }
         .knowledge-graph-page .kg-metric-value { font-size: 28px; font-weight: 700; line-height: 1.2; color: #303133; }
         .agri-knowledge-hub .hub-card { border-radius: 8px; }
@@ -51,6 +149,322 @@
         .project-division-page .division-card-header { display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
         .project-division-page .division-duty { color: #606266; line-height: 1.7; min-height: 72px; }
         .project-division-page .division-subtitle { font-weight: 700; color: #303133; margin: 12px 0 8px; }
+
+        /* ========== Dashboard 首页样式 ========== */
+        .dashboard-page { background: #f5f7fa; min-height: 100vh; }
+
+        /* Hero 区域 */
+        .hero-section {
+            position: relative;
+            background: linear-gradient(135deg, #0f1b12 0%, #162218 40%, #1a2f1e 70%, #1d3322 100%);
+            padding: 48px 40px 56px;
+            overflow: hidden;
+            border-radius: 0 0 24px 24px;
+        }
+        .hero-bg {
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(ellipse 600px 400px at 80% 50%, rgba(34,197,94,0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 400px 300px at 20% 80%, rgba(34,197,94,0.05) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        .hero-content {
+            position: relative; z-index: 1;
+            max-width: 1200px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between; gap: 48px;
+        }
+        .hero-left { flex: 1; max-width: 560px; }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 6px 16px; border-radius: 20px;
+            background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.2);
+            color: #4ade80; font-size: 13px; margin-bottom: 20px;
+        }
+        .hero-title {
+            font-size: 42px; font-weight: 800; line-height: 1.2;
+            color: #f0fdf4; margin: 0 0 16px;
+            letter-spacing: -0.5px;
+        }
+        .hero-desc {
+            font-size: 15px; line-height: 1.8;
+            color: rgba(240,253,244,0.55); margin: 0 0 28px;
+        }
+        .hero-actions { display: flex; gap: 12px; margin-bottom: 36px; }
+        .hero-btn-ghost {
+            background: rgba(255,255,255,0.06) !important;
+            border: 1px solid rgba(255,255,255,0.15) !important;
+            color: rgba(255,255,255,0.8) !important;
+        }
+        .hero-btn-ghost:hover {
+            background: rgba(255,255,255,0.1) !important;
+            border-color: rgba(255,255,255,0.25) !important;
+            color: #fff !important;
+        }
+        .hero-stats { display: flex; gap: 32px; }
+        .hero-stat-item { display: flex; flex-direction: column; }
+        .hero-stat-num { font-size: 20px; font-weight: 700; color: #4ade80; }
+        .hero-stat-label { font-size: 12px; color: rgba(240,253,244,0.4); margin-top: 2px; }
+
+        /* Tilt Card */
+        .hero-right { flex-shrink: 0; }
+        .tilt-card {
+            width: 340px; border-radius: 16px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            will-change: transform;
+            position: relative; overflow: hidden;
+        }
+        .tilt-card-glare {
+            position: absolute; inset: 0; z-index: 2;
+            pointer-events: none; border-radius: 16px;
+        }
+        .tilt-card-inner { position: relative; z-index: 1; padding: 20px; }
+        .tilt-card-header {
+            display: flex; align-items: center; gap: 6px;
+            margin-bottom: 20px; padding-bottom: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .tilt-card-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+        }
+        .tilt-card-dot.green { background: #22c55e; }
+        .tilt-card-dot.yellow { background: #eab308; }
+        .tilt-card-dot.red { background: #ef4444; }
+        .tilt-card-title {
+            margin-left: 8px; font-size: 13px;
+            color: rgba(255,255,255,0.5); font-weight: 500;
+        }
+        .tilt-card-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+        }
+        .tilt-metric {
+            display: flex; align-items: center; gap: 12px;
+            padding: 14px; border-radius: 10px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .tilt-metric-icon { font-size: 20px; opacity: 0.9; }
+        .tilt-metric-info { display: flex; flex-direction: column; }
+        .tilt-metric-value { font-size: 18px; font-weight: 700; color: #f0fdf4; }
+        .tilt-metric-label { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+        .tilt-card-footer {
+            display: flex; align-items: center; gap: 6px;
+            margin-top: 16px; padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            font-size: 11px; color: rgba(255,255,255,0.3);
+        }
+        .tilt-status-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #22c55e; animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Section 通用 */
+        .section-block {
+            max-width: 1200px; margin: 0 auto 24px;
+            padding: 0 40px;
+        }
+        .section-header {
+            display: flex; align-items: baseline; justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .section-title {
+            font-size: 18px; font-weight: 700; color: #1a1a1a; margin: 0;
+        }
+        .section-subtitle {
+            font-size: 13px; color: #999; margin-left: 12px;
+        }
+
+        /* 数据概览卡片 */
+        .data-card {
+            background: #fff; border-radius: 10px;
+            padding: 20px; border-top: 3px solid #eee;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .data-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+        .data-card-top {
+            display: flex; align-items: baseline; gap: 4px;
+            margin-bottom: 10px;
+        }
+        .data-card-value { font-size: 28px; font-weight: 800; line-height: 1; }
+        .data-card-unit { font-size: 13px; color: #999; }
+        .data-card-bottom {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .data-card-label { font-size: 13px; color: #666; font-weight: 500; }
+        .data-card-range { font-size: 11px; color: #bbb; }
+
+        /* Agent 决策卡片 */
+        .agent-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+        }
+        .agent-card {
+            background: #fff; border-radius: 10px; padding: 16px;
+            border: 1px solid #f0f0f0;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+        .agent-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            border-color: #e0e0e0;
+        }
+        .agent-card-header {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+        }
+        .agent-card-avatar {
+            width: 36px; height: 36px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; flex-shrink: 0;
+        }
+        .agent-card-name { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+        .agent-card-role { font-size: 11px; color: #999; }
+        .agent-card-body {
+            font-size: 13px; line-height: 1.7; color: #555;
+            margin-bottom: 10px;
+        }
+        .agent-card-footer {
+            display: flex; justify-content: space-between;
+            font-size: 11px; color: #bbb;
+        }
+
+        /* 预警列表 */
+        .alert-list { display: flex; flex-direction: column; gap: 10px; }
+        .alert-item {
+            display: flex; align-items: flex-start; gap: 12px;
+            background: #fff; border-radius: 10px; padding: 14px 16px;
+            border: 1px solid #f0f0f0;
+            transition: box-shadow 0.2s;
+        }
+        .alert-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .alert-item-indicator {
+            width: 3px; height: 36px; border-radius: 2px; flex-shrink: 0; margin-top: 2px;
+        }
+        .alert-item-content { flex: 1; min-width: 0; }
+        .alert-item-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 3px; }
+        .alert-item-desc { font-size: 12px; color: #999; line-height: 1.5; }
+        .alert-item-meta {
+            display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0;
+        }
+        .alert-item-time { font-size: 11px; color: #ccc; }
+
+        /* ========== 统一全局样式系统 ========== */
+
+        /* 页面头部 */
+        .page-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+        }
+        .page-header-left { display: flex; flex-direction: column; }
+        .page-header-title {
+            font-size: 20px; font-weight: 700; color: #1a1a1a; margin: 0;
+            line-height: 1.3;
+        }
+        .page-header-subtitle {
+            font-size: 13px; color: #909399; margin: 4px 0 0;
+        }
+
+        /* 统一统计卡片 */
+        .stat-card {
+            background: #fff; border-radius: 8px; padding: 20px;
+            border: 1px solid #ebeef5;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .stat-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            transform: translateY(-1px);
+        }
+        .stat-card-inner {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .stat-card-info { flex: 1; }
+        .stat-card-value {
+            font-size: 28px; font-weight: 700; line-height: 1.2; color: #303133;
+        }
+        .stat-card-label {
+            font-size: 13px; color: #909399; margin-top: 6px;
+        }
+        .stat-card-icon {
+            font-size: 32px; opacity: 0.15; flex-shrink: 0; margin-left: 12px;
+        }
+
+        /* 统一查询栏 */
+        .query-bar {
+            background: #fff; border-radius: 8px; padding: 16px 20px;
+            border: 1px solid #ebeef5;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            margin-bottom: 16px;
+        }
+
+        /* 统一内容卡片 */
+        .content-card {
+            background: #fff; border-radius: 8px;
+            border: 1px solid #ebeef5;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            overflow: hidden;
+        }
+        .content-card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f0f2f5;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .content-card-title {
+            font-size: 15px; font-weight: 600; color: #303133;
+        }
+        .content-card-body { padding: 20px; }
+
+        /* 统一标签色 */
+        .tag-success { background: #f0f9eb; color: #67c23a; }
+        .tag-warning { background: #fdf6ec; color: #e6a23c; }
+        .tag-danger { background: #fef0f0; color: #f56c6c; }
+        .tag-info { background: #f4f4f5; color: #909399; }
+
+        /* 登录页 */
+        .login-page {
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            background: #f5f7fa;
+        }
+        .login-card {
+            width: 420px; border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .login-logo {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: #f0f9eb; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        /* 个人中心页 */
+        .profile-header {
+            background: #f5f7fa; padding: 32px 24px 24px;
+            border-radius: 8px 8px 0 0; position: relative;
+            border: 1px solid #ebeef5; border-bottom: none;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .hero-content { flex-direction: column; text-align: center; }
+            .hero-left { max-width: 100%; }
+            .hero-actions { justify-content: center; }
+            .hero-stats { justify-content: center; }
+            .hero-right { margin-top: 24px; }
+            .tilt-card { width: 300px; }
+        }
+        @media (max-width: 768px) {
+            .hero-section { padding: 32px 20px 40px; }
+            .hero-title { font-size: 28px; }
+            .section-block { padding: 0 20px; }
+            .agent-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -59,24 +473,23 @@
     </div>
 
     <!-- API Service -->
-    <script src="./js/api.js?v=kg-rag-2"></script>
+    <script src="./js/api.js?v=v4"></script>
     <!-- Components -->
-    <script src="./js/components/Login.js"></script>
-    <script src="./js/components/AppLayout.js"></script>
-    <script src="./js/components/Dashboard.js"></script>
-    <script src="./js/components/DeviceList.js"></script>
-    <script src="./js/components/EnvironmentData.js"></script>
-    <script src="./js/components/Statistics.js"></script>
-    <script src="./js/components/UserManagement.js"></script>
-    <script src="./js/components/AIAssistant.js"></script>
-    <script src="./js/components/KnowledgeGraph.js?v=kg-rag-2"></script>
-    <script src="./js/components/AgriKnowledgeHub.js"></script>
-    <script src="./js/components/ProjectDivision.js"></script>
-    <script src="./js/components/UserProfile.js"></script>
-    <script src="./js/components/TaskManagement.js"></script>
-    <script src="./js/components/AlertCenter.js"></script>
-    <script src="./js/components/YieldPrediction.js"></script>
-    <!-- App -->
-    <script src="./js/app.js"></script>
+    <script src="./js/components/Login.js?v=v4"></script>
+    <script src="./js/components/AppLayout.js?v=v4"></script>
+    <script src="./js/components/Dashboard.js?v=v4"></script>
+    <script src="./js/components/DeviceList.js?v=v4"></script>
+    <script src="./js/components/EnvironmentData.js?v=v4"></script>
+    <script src="./js/components/Statistics.js?v=v4"></script>
+    <script src="./js/components/UserManagement.js?v=v4"></script>
+    <script src="./js/components/AIAssistant.js?v=v4"></script>
+    <script src="./js/components/KnowledgeGraph.js?v=v4"></script>
+    <script src="./js/components/AgriKnowledgeHub.js?v=v4"></script>
+    <script src="./js/components/ProjectDivision.js?v=v4"></script>
+    <script src="./js/components/UserProfile.js?v=v4"></script>
+    <script src="./js/components/TaskManagement.js?v=v4"></script>
+    <script src="./js/components/AlertCenter.js?v=v4"></script>
+    <script src="./js/components/YieldPrediction.js?v=v4"></script>
+    <script src="./js/app.js?v=v4"></script>
 </body>
 </html>

@@ -34,14 +34,27 @@ const UserManagement = {
                             <el-tag :type="getRoleTagType(row.role)" size="small">{{ getRoleName(row.role) }}</el-tag>
                         </template>
                     </el-table-column>
+                    <el-table-column label="状态" width="100">
+                        <template #default="{ row }">
+                            <el-tag :type="row.enabled !== false ? 'success' : 'danger'" size="small">
+                                {{ row.enabled !== false ? '正常' : '已禁用' }}
+                            </el-tag>
+                        </template>
+                    </el-table-column>
                     <el-table-column prop="createdAt" label="创建时间"></el-table-column>
-                    <el-table-column label="操作" width="200" fixed="right">
+                    <el-table-column label="操作" width="240" fixed="right">
                         <template #default="{ row }">
                             <el-button type="primary" size="small" link @click="editUser(row)">
                                 <i class="fas fa-edit" style="margin-right: 4px;"></i>编辑
                             </el-button>
-                            <el-button type="danger" size="small" link @click="confirmDelete(row)">
-                                <i class="fas fa-trash" style="margin-right: 4px;"></i>删除
+                            <el-button 
+                                :type="row.enabled !== false ? 'warning' : 'success'" 
+                                size="small" 
+                                link 
+                                @click="confirmToggle(row)"
+                                :disabled="row.role === 'ADMIN'">
+                                <i :class="row.enabled !== false ? 'fas fa-ban' : 'fas fa-check'" style="margin-right: 4px;"></i>
+                                {{ row.enabled !== false ? '禁用' : '启用' }}
                             </el-button>
                         </template>
                     </el-table-column>
@@ -114,7 +127,7 @@ const UserManagement = {
 
         const loadUsers = async () => {
             try {
-                const res = await fetch(API_BASE_URL + '/api/users/list', { headers: getHeaders() });
+                const res = await fetch(API_BASE_URL + '/api/users', { headers: getHeaders() });
                 const data = await res.json();
                 if (data.code === 200) users.value = data.data;
             } catch (e) {
@@ -152,26 +165,29 @@ const UserManagement = {
             }
         };
 
-        const confirmDelete = (user) => {
+        const confirmToggle = (user) => {
+            const action = user.enabled !== false ? '禁用' : '启用';
+            const type = user.enabled !== false ? 'warning' : 'success';
             ElementPlus.ElMessageBox.confirm(
-                '确定要删除用户「' + user.username + '」吗？此操作不可恢复。',
-                '确认删除',
-                { confirmButtonText: '确定删除', cancelButtonText: '取消', type: 'error' }
-            ).then(() => deleteUser(user.username)).catch(() => {});
+                '确定要' + action + '用户「' + user.username + '」吗？',
+                '确认' + action,
+                { confirmButtonText: '确定', cancelButtonText: '取消', type: type }
+            ).then(() => toggleUserStatus(user.id)).catch(() => {});
         };
 
-        const deleteUser = async (username) => {
+        const toggleUserStatus = async (id) => {
             try {
-                const res = await fetch(API_BASE_URL + '/api/users/' + username, { method: 'DELETE', headers: getHeaders() });
+                const res = await fetch(API_BASE_URL + '/api/users/' + id + '/toggle-status', { method: 'PUT', headers: getHeaders() });
                 const data = await res.json();
                 if (data.code === 200) {
-                    ElementPlus.ElMessage.success('删除成功');
+                    const action = data.data.enabled ? '启用' : '禁用';
+                    ElementPlus.ElMessage.success(action + '成功');
                     loadUsers();
                 } else {
-                    ElementPlus.ElMessage.error(data.message || '删除失败');
+                    ElementPlus.ElMessage.error(data.message || '操作失败');
                 }
             } catch (e) {
-                ElementPlus.ElMessage.error('删除失败');
+                ElementPlus.ElMessage.error('操作失败');
             }
         };
 
@@ -179,7 +195,7 @@ const UserManagement = {
 
         return {
             users, filteredUsers, queryForm, userForm, showDialog, isEdit,
-            getRoleName, getRoleTagType, resetForm, loadUsers, editUser, saveUser, confirmDelete
+            getRoleName, getRoleTagType, resetForm, loadUsers, editUser, saveUser, confirmToggle
         };
     }
 };

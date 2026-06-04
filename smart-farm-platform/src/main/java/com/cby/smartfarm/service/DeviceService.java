@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -29,6 +30,52 @@ public class DeviceService {
     public Device findByCode(String deviceCode) {
         return deviceRepository.findByDeviceCode(deviceCode)
                 .orElseThrow(() -> new IllegalArgumentException("设备不存在: " + deviceCode));
+    }
+
+    @Transactional
+    public Device create(Device device) {
+        if (deviceRepository.findByDeviceCode(device.getDeviceCode()).isPresent()) {
+            throw new IllegalArgumentException("Device code already exists: " + device.getDeviceCode());
+        }
+        if (device.getState() == null || device.getState().isBlank()) {
+            device.setState("STANDBY");
+        }
+        if (device.getOnline() == null) {
+            device.setOnline(true);
+        }
+        if (device.getCreateTime() == null) {
+            device.setCreateTime(LocalDateTime.now());
+        }
+        Device saved = deviceRepository.save(device);
+        LogRecorder.getInstance().info("Create device " + saved.getDeviceCode());
+        return saved;
+    }
+
+    @Transactional
+    public Device update(String deviceCode, Device request) {
+        Device device = findByCode(deviceCode);
+        if (request.getDeviceName() != null) {
+            device.setDeviceName(request.getDeviceName());
+        }
+        if (request.getDeviceType() != null) {
+            device.setDeviceType(request.getDeviceType());
+        }
+        if (request.getArea() != null) {
+            device.setArea(request.getArea());
+        }
+        if (request.getOnline() != null) {
+            device.setOnline(request.getOnline());
+        }
+        Device saved = deviceRepository.save(device);
+        LogRecorder.getInstance().info("Update device " + saved.getDeviceCode());
+        return saved;
+    }
+
+    @Transactional
+    public void delete(String deviceCode) {
+        Device device = findByCode(deviceCode);
+        deviceRepository.delete(device);
+        LogRecorder.getInstance().warn("Delete device " + deviceCode);
     }
 
     @Transactional

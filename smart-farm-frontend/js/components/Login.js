@@ -1,14 +1,14 @@
 const Login = {
     template: `
-        <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #67c23a 0%, #409eff 100%);">
-            <el-card style="width: 420px; border-radius: 16px;" shadow="always">
+        <div class="login-page">
+            <el-card class="login-card" shadow="always">
                 <!-- Logo -->
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="width: 80px; height: 80px; background: #f0f9eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
-                        <i class="fas fa-seedling" style="font-size: 36px; color: #67c23a;"></i>
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <div class="login-logo">
+                        <i class="fas fa-seedling" style="font-size: 32px; color: #67c23a;"></i>
                     </div>
-                    <h2 style="margin: 0; color: #303133;">智慧农场综合管理平台</h2>
-                    <p style="color: #909399; margin-top: 8px; font-size: 14px;">{{ isLogin ? '登录您的账户' : '创建新账户' }}</p>
+                    <h2 style="margin: 0; color: #303133; font-size: 20px;">智慧农场综合管理平台</h2>
+                    <p style="color: #909399; margin-top: 6px; font-size: 13px;">{{ isLogin ? '登录您的账户' : '创建新账户' }}</p>
                 </div>
 
                 <!-- 登录/注册切换 -->

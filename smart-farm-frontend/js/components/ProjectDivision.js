@@ -126,6 +126,80 @@ const ProjectDivision = {
                 </el-col>
             </el-row>
 
+            <el-row :gutter="16" style="margin-top: 16px;">
+                <el-col :xs="24" :lg="12">
+                    <el-card shadow="never" class="division-card">
+                        <template #header>
+                            <div class="division-card-header">
+                                <span>组长：单例模式应用</span>
+                                <el-button size="small" @click="showSingleton = !showSingleton">
+                                    {{ showSingleton ? '收起' : '查看详情' }}
+                                    <i :class="showSingleton ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" style="margin-left: 4px;"></i>
+                                </el-button>
+                            </div>
+                        </template>
+                        <el-descriptions :column="1" size="small" border>
+                            <el-descriptions-item label="ConfigCenter">全局阈值配置，双重检查锁保证唯一实例</el-descriptions-item>
+                            <el-descriptions-item label="CommandQueueManager">统一管理设备命令队列，支持排队执行和回溯</el-descriptions-item>
+                            <el-descriptions-item label="LogRecorder">统一记录设备操作、代理审计和系统事件日志</el-descriptions-item>
+                        </el-descriptions>
+                        <div v-if="showSingleton" style="margin-top: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-size: 13px; color: #606266;">运行时单例实例状态</span>
+                                <el-button type="primary" size="small" :loading="singletonLoading" @click="loadSingletons">刷新</el-button>
+                            </div>
+                            <el-input type="textarea" :rows="5" readonly :model-value="singletonText"></el-input>
+                        </div>
+                    </el-card>
+                </el-col>
+                <el-col :xs="24" :lg="12">
+                    <el-card shadow="never" class="division-card">
+                        <template #header>
+                            <div class="division-card-header">
+                                <span>组长：责任链异常处理</span>
+                                <div>
+                                    <el-tag size="small" type="warning" style="margin-right: 8px;">4级链路</el-tag>
+                                    <el-button size="small" @click="showChain = !showChain">
+                                        {{ showChain ? '收起' : '查看详情' }}
+                                        <i :class="showChain ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" style="margin-left: 4px;"></i>
+                                    </el-button>
+                                </div>
+                            </div>
+                        </template>
+                        <div style="color: #606266; font-size: 13px; line-height: 1.8;">
+                            异常事件按级别逐层上报：本地控制器 → 区域控制器 → 中央平台 → 管理员通知。
+                            支持设备故障、环境异常、虫情预警三类事件的自动分级处理。
+                        </div>
+                        <div v-if="showChain" style="margin-top: 14px;">
+                            <el-divider style="margin: 0 0 12px;"></el-divider>
+                            <el-form :inline="true" size="small">
+                                <el-form-item label="级别">
+                                    <el-select v-model="chainEvent.level" style="width: 110px;">
+                                        <el-option label="LOW" value="LOW"></el-option>
+                                        <el-option label="MEDIUM" value="MEDIUM"></el-option>
+                                        <el-option label="HIGH" value="HIGH"></el-option>
+                                        <el-option label="CRITICAL" value="CRITICAL"></el-option>
+                                    </el-select>
+                                </el-form-item>
+                                <el-form-item label="事件">
+                                    <el-select v-model="chainEvent.eventType" style="width: 150px;">
+                                        <el-option label="设备故障" value="DEVICE_FAULT"></el-option>
+                                        <el-option label="环境异常" value="ENVIRONMENT_ABNORMAL"></el-option>
+                                        <el-option label="虫情预警" value="PEST_WARNING"></el-option>
+                                    </el-select>
+                                </el-form-item>
+                                <el-form-item>
+                                    <el-button type="primary" :loading="chainLoading" @click="simulateChainEvent">模拟处理</el-button>
+                                </el-form-item>
+                            </el-form>
+                            <el-timeline style="margin-top: 10px;">
+                                <el-timeline-item v-for="item in chainProcess" :key="item" color="#409eff">{{ item }}</el-timeline-item>
+                            </el-timeline>
+                        </div>
+                    </el-card>
+                </el-col>
+            </el-row>
+
             <el-row :gutter="16">
                 <el-col :xs="24" :lg="12">
                     <el-card shadow="never" class="division-card">
@@ -205,6 +279,23 @@ const ProjectDivision = {
         const commandLoading = Vue.ref(false);
         const proxyLoading = Vue.ref(false);
         const decoratorLoading = Vue.ref(false);
+        const showSingleton = Vue.ref(false);
+        const showChain = Vue.ref(false);
+        const singletonLoading = Vue.ref(false);
+        const chainLoading = Vue.ref(false);
+        const singletonInfo = Vue.ref({});
+        const singletonText = Vue.computed(() => JSON.stringify(singletonInfo.value, null, 2));
+        const chainProcess = Vue.ref([
+            'LocalControllerHandler：等待事件',
+            'RegionControllerHandler：等待事件',
+            'CentralPlatformHandler：等待事件',
+            'AdminNotifyHandler：等待事件'
+        ]);
+        const chainEvent = Vue.reactive({
+            eventType: 'DEVICE_FAULT',
+            level: 'HIGH',
+            message: '模拟温室设备异常，需要责任链逐级处理'
+        });
         const sensorResult = Vue.ref({});
         const observerResult = Vue.ref({});
         const strategyResult = Vue.ref({});
@@ -226,8 +317,7 @@ const ProjectDivision = {
                 type: 'success',
                 duty: '负责整体架构、数据库统筹；RAG、知识图谱、智能体作为单独核心模块，不分配给其他成员。',
                 pages: [
-                    { name: '知识图谱RAG', path: '/knowledge-graph' },
-                    { name: 'Agent决策中心', path: '/ai-assistant' },
+                    { name: '智能决策中心（含知识图谱RAG）', path: '/ai-assistant' },
                     { name: '农业知识决策', path: '/agri-knowledge' }
                 ],
                 patterns: ['单例模式', '责任链模式', '模块整合']
@@ -294,8 +384,7 @@ const ProjectDivision = {
             { page: '统计分析', owner: '成员 A/B', feature: '统计接口、环境统计、设备统计、操作日志', path: '/statistics' },
             { page: '产量预测', owner: '成员 A/C', feature: '生产决策辅助、参数调整、趋势图展示', path: '/yield-prediction' },
             { page: '用户管理', owner: '成员 B', feature: '用户和角色管理、权限控制', path: '/users' },
-            { page: '知识图谱RAG', owner: '组长 / 你', feature: 'RAG、知识图谱检索和可视化，单独归组长', path: '/knowledge-graph' },
-            { page: 'Agent决策中心', owner: '组长 / 你', feature: '多 Agent 决策流程，单独归组长', path: '/ai-assistant' }
+            { page: '智能决策中心', owner: '组长 / 你', feature: '多Agent决策 + RAG文档检索 + 知识图谱可视化，统一决策入口', path: '/ai-assistant' }
         ];
 
         const unwrap = async (response) => {
@@ -409,6 +498,48 @@ const ProjectDivision = {
             }
         };
 
+        const loadSingletons = async () => {
+            singletonLoading.value = true;
+            try {
+                const res = await fetch(API_BASE_URL + '/api/design-pattern/singleton', { headers: headers() });
+                singletonInfo.value = await res.json().then(d => d.data || d);
+                ElementPlus.ElMessage.success('已获取运行时单例实例');
+            } catch (error) {
+                ElementPlus.ElMessage.error(error.message || '获取单例信息失败');
+            } finally {
+                singletonLoading.value = false;
+            }
+        };
+
+        const simulateChainEvent = async () => {
+            chainLoading.value = true;
+            try {
+                const res = await fetch(API_BASE_URL + '/api/design-pattern/chain/simulate', {
+                    method: 'POST',
+                    headers: headers(),
+                    body: JSON.stringify(chainEvent)
+                });
+                const data = await res.json().then(d => d.data || d);
+                const handlerSequence = (data && data.handlerSequence) ? data.handlerSequence : [];
+                const finalLevel = (data && data.finalLevel) ? data.finalLevel : '';
+                const message = (data && data.message) ? data.message : '处理完成';
+                chainProcess.value = [
+                    'LocalControllerHandler：' + (handlerSequence[0] || '已处理 - 记录日志'),
+                    'RegionControllerHandler：' + (handlerSequence[1] || '已处理 - 区域同步'),
+                    'CentralPlatformHandler：' + (handlerSequence[2] || '已处理 - 平台预警'),
+                    'AdminNotifyHandler：' + (handlerSequence[3] || '已处理 - 通知管理员'),
+                    '最终处理级别：' + finalLevel,
+                    '处理结论：' + message
+                ];
+                ElementPlus.ElMessage.success('责任链模拟完成');
+            } catch (error) {
+                chainProcess.value = ['责任链处理异常：' + (error.message || '无法连接后端')];
+                ElementPlus.ElMessage.error(error.message || '模拟异常事件失败');
+            } finally {
+                chainLoading.value = false;
+            }
+        };
+
         const sensorSummary = Vue.computed(() => {
             const data = sensorResult.value || {};
             const observer = observerResult.value || {};
@@ -430,6 +561,12 @@ const ProjectDivision = {
         Vue.onMounted(() => {
             collectSensor();
             runStrategy();
+        });
+
+        Vue.watch(showSingleton, (val) => {
+            if (val && Object.keys(singletonInfo.value).length === 0) {
+                loadSingletons();
+            }
         });
 
         return {
@@ -456,7 +593,17 @@ const ProjectDivision = {
             executeCommands,
             undoCommand,
             remoteControl,
-            decoratorDemo
+            decoratorDemo,
+            showSingleton,
+            showChain,
+            singletonLoading,
+            chainLoading,
+            singletonInfo,
+            singletonText,
+            chainEvent,
+            chainProcess,
+            loadSingletons,
+            simulateChainEvent
         };
     }
 };

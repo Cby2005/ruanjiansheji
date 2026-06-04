@@ -1,78 +1,90 @@
 const Statistics = {
     template: `
         <div>
+            <!-- 页面头部 -->
+            <div class="page-header">
+                <div class="page-header-left">
+                    <h1 class="page-header-title">统计分析</h1>
+                    <p class="page-header-subtitle">设备运行统计、环境数据分布与操作日志</p>
+                </div>
+            </div>
+
             <!-- 概览统计 -->
-            <el-row :gutter="20" style="margin-bottom: 20px;">
-                <el-col :span="6" v-for="stat in overviewStats" :key="stat.label">
-                    <el-card shadow="hover" :body-style="{ padding: '20px' }">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-size: 28px; font-weight: bold;" :style="{ color: stat.color }">{{ stat.value }}</div>
-                                <div style="font-size: 13px; color: #909399; margin-top: 5px;">{{ stat.label }}</div>
+            <el-row :gutter="16" style="margin-bottom: 16px;">
+                <el-col :xs="12" :sm="6" v-for="stat in overviewStats" :key="stat.label">
+                    <div class="stat-card" style="margin-bottom: 16px;">
+                        <div class="stat-card-inner">
+                            <div class="stat-card-info">
+                                <div class="stat-card-value" :style="{ color: stat.color }">{{ stat.value }}</div>
+                                <div class="stat-card-label">{{ stat.label }}</div>
                             </div>
-                            <i :class="stat.icon" style="font-size: 32px; opacity: 0.6;" :style="{ color: stat.color }"></i>
+                            <i :class="stat.icon" class="stat-card-icon" :style="{ color: stat.color }"></i>
                         </div>
-                    </el-card>
+                    </div>
                 </el-col>
             </el-row>
 
             <!-- 图表 -->
-            <el-row :gutter="20" style="margin-bottom: 20px;">
-                <el-col :span="12">
-                    <el-card shadow="hover">
-                        <template #header>
-                            <span style="font-weight: bold;">设备操作统计</span>
-                        </template>
-                        <div ref="barRef" style="height: 350px;"></div>
-                    </el-card>
+            <el-row :gutter="16" style="margin-bottom: 16px;">
+                <el-col :xs="24" :lg="12">
+                    <div class="content-card" style="margin-bottom: 16px;">
+                        <div class="content-card-header">
+                            <span class="content-card-title">设备操作统计</span>
+                        </div>
+                        <div class="content-card-body">
+                            <div ref="barRef" style="height: 350px;"></div>
+                        </div>
+                    </div>
                 </el-col>
-                <el-col :span="12">
-                    <el-card shadow="hover">
-                        <template #header>
-                            <span style="font-weight: bold;">环境数据分布</span>
-                        </template>
-                        <div ref="radarRef" style="height: 350px;"></div>
-                    </el-card>
+                <el-col :xs="24" :lg="12">
+                    <div class="content-card" style="margin-bottom: 16px;">
+                        <div class="content-card-header">
+                            <span class="content-card-title">环境数据分布</span>
+                        </div>
+                        <div class="content-card-body">
+                            <div ref="radarRef" style="height: 350px;"></div>
+                        </div>
+                    </div>
                 </el-col>
             </el-row>
 
             <!-- 操作日志表格 -->
-            <el-card shadow="hover">
-                <template #header>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-weight: bold;">设备操作日志</span>
-                        <el-form :inline="true" style="margin-bottom: 0;">
-                            <el-form-item label="设备编码" style="margin-bottom: 0;">
-                                <el-input v-model="queryDeviceCode" placeholder="输入设备编码" clearable size="small" style="width: 180px;"></el-input>
-                            </el-form-item>
-                            <el-form-item style="margin-bottom: 0;">
-                                <el-button type="primary" size="small" @click="loadLogs"><i class="fas fa-search" style="margin-right: 4px;"></i>查询</el-button>
-                            </el-form-item>
-                        </el-form>
-                    </div>
-                </template>
-                <el-table :data="logs" stripe border style="width: 100%;" v-loading="loading">
-                    <el-table-column prop="id" label="ID" width="70"></el-table-column>
-                    <el-table-column prop="deviceCode" label="设备编码" width="150"></el-table-column>
-                    <el-table-column prop="operationType" label="操作类型" width="120">
-                        <template #default="{ row }">
-                            <el-tag :type="getOpTagType(row.operationType)" size="small">{{ row.operationType }}</el-tag>
-                        </template>
-                    </el-table-column>
-                    <el-table-column prop="operator" label="操作人" width="100"></el-table-column>
-                    <el-table-column prop="result" label="操作结果"></el-table-column>
-                    <el-table-column prop="operationTime" label="操作时间" width="180"></el-table-column>
-                </el-table>
-                <div style="margin-top: 15px; text-align: right;">
-                    <el-pagination
-                        v-model:current-page="currentPage"
-                        :page-size="pageSize"
-                        :total="total"
-                        layout="total, prev, pager, next"
-                        @current-change="loadLogs">
-                    </el-pagination>
+            <div class="content-card">
+                <div class="content-card-header">
+                    <span class="content-card-title">设备操作日志</span>
+                    <el-form :inline="true" style="margin-bottom: 0;">
+                        <el-form-item label="设备编码" style="margin-bottom: 0;">
+                            <el-input v-model="queryDeviceCode" placeholder="输入设备编码" clearable size="small" style="width: 180px;"></el-input>
+                        </el-form-item>
+                        <el-form-item style="margin-bottom: 0;">
+                            <el-button type="primary" size="small" @click="loadLogs"><i class="fas fa-search" style="margin-right: 4px;"></i>查询</el-button>
+                        </el-form-item>
+                    </el-form>
                 </div>
-            </el-card>
+                <div class="content-card-body">
+                    <el-table :data="logs" stripe border style="width: 100%;" v-loading="loading">
+                        <el-table-column prop="id" label="ID" width="70"></el-table-column>
+                        <el-table-column prop="deviceCode" label="设备编码" width="150"></el-table-column>
+                        <el-table-column prop="operationType" label="操作类型" width="120">
+                            <template #default="{ row }">
+                                <el-tag :type="getOpTagType(row.operationType)" size="small">{{ row.operationType }}</el-tag>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="operator" label="操作人" width="100"></el-table-column>
+                        <el-table-column prop="result" label="操作结果"></el-table-column>
+                        <el-table-column prop="operationTime" label="操作时间" width="180"></el-table-column>
+                    </el-table>
+                    <div style="margin-top: 15px; text-align: right;">
+                        <el-pagination
+                            v-model:current-page="currentPage"
+                            :page-size="pageSize"
+                            :total="total"
+                            layout="total, prev, pager, next"
+                            @current-change="loadLogs">
+                        </el-pagination>
+                    </div>
+                </div>
+            </div>
         </div>
     `,
 
@@ -86,7 +98,6 @@ const Statistics = {
         const pageSize = 10;
         const total = Vue.ref(0);
         const loading = Vue.ref(false);
-
         const overviewStats = Vue.ref([
             { label: '设备总数', value: '--', icon: 'fas fa-microchip', color: '#409eff' },
             { label: '运行中', value: '--', icon: 'fas fa-play-circle', color: '#67c23a' },
@@ -241,6 +252,8 @@ const Statistics = {
             });
         });
 
-        return { overviewStats, barRef, radarRef, logs, queryDeviceCode, currentPage, pageSize, total, loading, loadLogs, getOpTagType };
+        return {
+            overviewStats, barRef, radarRef, logs, queryDeviceCode, currentPage, pageSize, total, loading, loadLogs, getOpTagType
+        };
     }
 };

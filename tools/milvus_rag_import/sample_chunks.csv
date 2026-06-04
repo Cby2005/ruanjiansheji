@@ -1,0 +1,2 @@
+chunk_id,article_id,source,title,source_url,category,publish_date,chunk_index,chunk_text,entities
+sample_001_0001,sample_001,agri_cn,小麦赤霉病防控技术,https://example.com/agri/sample,病虫害防治,2026-05-01,0,小麦赤霉病在高温高湿条件下风险升高，应关注抽穗扬花期天气变化，适期开展田间巡查和综合防控。,小麦|赤霉病|高温高湿|防控

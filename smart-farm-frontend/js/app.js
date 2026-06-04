@@ -53,8 +53,8 @@ const routes = [
     { path: '/environment', component: EnvironmentData, meta: { requiresAuth: true } },                               // 所有角色
     { path: '/statistics', component: Statistics, meta: { requiresAuth: true } },                                     // 所有角色
     { path: '/users', component: UserManagement, meta: { requiresAuth: true, requiredRole: 'ADMIN' } },                // 仅管理员
-    { path: '/ai-assistant', component: AIAssistant, meta: { requiresAuth: true, requiredRole: 'TECHNICIAN' } },       // 技术员及以上
-    { path: '/knowledge-graph', component: KnowledgeGraph, meta: { requiresAuth: true, requiredRole: 'TECHNICIAN' } }, // 技术员及以上
+    { path: '/ai-assistant', component: AIAssistant, meta: { requiresAuth: true, requiredRole: 'TECHNICIAN' } },       // 技术员及以上（含知识图谱+Agent决策）
+    { path: '/knowledge-graph', redirect: '/ai-assistant' },                                                            // 重定向到合并页面
     { path: '/agri-knowledge', component: AgriKnowledgeHub, meta: { requiresAuth: true } },                           // 所有角色
     { path: '/project-division', component: ProjectDivision, meta: { requiresAuth: true } },                          // 所有角色
     { path: '/profile', component: UserProfile, meta: { requiresAuth: true } },                                       // 所有角色

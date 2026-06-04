@@ -105,6 +105,16 @@ public class UserController {
         }
     }
 
+    @PutMapping("/{id}/toggle-status")
+    @Operation(summary = "切换用户启用/禁用状态")
+    public Result<Map<String, Object>> toggleUserStatus(@PathVariable Long id) {
+        try {
+            return Result.success(userService.toggleUserStatus(id));
+        } catch (Exception e) {
+            return Result.fail(e.getMessage());
+        }
+    }
+
     @GetMapping("/stats")
     @Operation(summary = "获取用户统计信息")
     public Result<Map<String, Object>> getUserStats() {

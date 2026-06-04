@@ -43,6 +43,25 @@ public class DeviceController {
         return Result.success(deviceService.findByCode(deviceCode));
     }
 
+    @PostMapping
+    @Operation(summary = "Create device")
+    public Result<Device> create(@RequestBody Device device) {
+        return Result.success(deviceService.create(device));
+    }
+
+    @PutMapping("/{deviceCode}")
+    @Operation(summary = "Update device")
+    public Result<Device> update(@PathVariable String deviceCode, @RequestBody Device device) {
+        return Result.success(deviceService.update(deviceCode, device));
+    }
+
+    @DeleteMapping("/{deviceCode}")
+    @Operation(summary = "Delete device")
+    public Result<String> delete(@PathVariable String deviceCode) {
+        deviceService.delete(deviceCode);
+        return Result.success("deleted");
+    }
+
     @PostMapping("/{deviceCode}/start")
     @Operation(summary = "启动设备，状态模式演示")
     public Result<Device> start(@PathVariable String deviceCode) {

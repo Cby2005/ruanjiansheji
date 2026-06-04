@@ -41,6 +41,22 @@ farm:
     latitude: ${FARM_DEFAULT_LATITUDE:39.9042}
     longitude: ${FARM_DEFAULT_LONGITUDE:116.4074}
 
+milvus:
+  host: ${MILVUS_HOST:localhost}
+  port: ${MILVUS_PORT:19530}
+  database: ${MILVUS_DATABASE:default}
+  collection: ${MILVUS_COLLECTION:smart_farm_rag_chunks}
+  embedding-dim: ${MILVUS_EMBEDDING_DIM:768}
+  metric-type: ${MILVUS_METRIC_TYPE:COSINE}
+  index-type: ${MILVUS_INDEX_TYPE:HNSW}
+
+embedding:
+  provider: ${EMBEDDING_PROVIDER:mock}
+  base-url: ${EMBEDDING_BASE_URL:}
+  api-key: ${EMBEDDING_API_KEY:}
+  model: ${EMBEDDING_MODEL:bge-base-zh-v1.5}
+  dimension: ${EMBEDDING_DIMENSION:768}
+
 logging:
   level:
     com.cby.smartfarm: DEBUG

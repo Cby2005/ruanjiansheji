@@ -85,6 +85,17 @@ public class CommandController {
         return Result.success(result);
     }
 
+    @GetMapping("/queue-status")
+    @Operation(summary = "Command queue status")
+    public Result<Map<String, Object>> queueStatus() {
+        CommandQueueManager manager = CommandQueueManager.getInstance();
+        Map<String, Object> result = new HashMap<>();
+        result.put("queueSize", manager.size());
+        result.put("pattern", "Singleton + Command");
+        result.put("description", "CommandQueueManager is a singleton command queue.");
+        return Result.success(result);
+    }
+
     /**
      * 根据命令类型创建对应的命令对象
      * 命令模式：将不同设备操作封装为独立的命令类

@@ -33,12 +33,8 @@ const AppLayout = {
                                     <template #title>环境监测</template>
                                 </el-menu-item>
                                 <el-menu-item index="/ai-assistant" v-if="hasPermission('TECHNICIAN')">
-                                    <i class="fas fa-robot" style="margin-right: 10px; width: 20px; text-align: center;"></i>
-                                    <template #title>Agent决策中心</template>
-                                </el-menu-item>
-                                <el-menu-item index="/knowledge-graph" v-if="hasPermission('TECHNICIAN')">
-                                    <i class="fas fa-project-diagram" style="margin-right: 10px; width: 20px; text-align: center;"></i>
-                                    <template #title>知识图谱RAG</template>
+                                    <i class="fas fa-brain" style="margin-right: 10px; width: 20px; text-align: center;"></i>
+                                    <template #title>智能决策中心</template>
                                 </el-menu-item>
                                 <el-menu-item index="/agri-knowledge">
                                     <i class="fas fa-cloud-sun-rain" style="margin-right: 10px; width: 20px; text-align: center;"></i>
@@ -161,8 +157,7 @@ const AppLayout = {
         const menuItems = [
             { path: '/', name: '首页大屏' },
             { path: '/environment', name: '环境监测' },
-            { path: '/ai-assistant', name: 'Agent决策中心' },
-            { path: '/knowledge-graph', name: '知识图谱RAG' },
+            { path: '/ai-assistant', name: '智能决策中心' },
             { path: '/agri-knowledge', name: '农业知识决策' },
             { path: '/project-division', name: '分工功能看板' },
             { path: '/devices', name: '智能设备控制' },

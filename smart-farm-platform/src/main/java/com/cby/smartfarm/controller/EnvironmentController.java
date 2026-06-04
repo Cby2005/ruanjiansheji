@@ -10,8 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -62,12 +64,17 @@ public class EnvironmentController {
     }
 
     @GetMapping("/history")
-    @Operation(summary = "分页查询环境历史数据")
+    @Operation(summary = "分页查询环境历史数据，支持时间范围筛选")
     public Result<Page<EnvironmentRecord>> history(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return Result.success(environmentRecordRepository.findAll(
-                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "collectTime"))));
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endDate) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "collectTime"));
+        if (startDate != null && endDate != null) {
+            return Result.success(environmentRecordRepository.findByCollectTimeBetween(startDate, endDate, pageRequest));
+        }
+        return Result.success(environmentRecordRepository.findAll(pageRequest));
     }
 
     @GetMapping("/trend")
