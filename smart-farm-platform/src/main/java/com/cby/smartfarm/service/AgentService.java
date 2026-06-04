@@ -133,7 +133,7 @@ public class AgentService {
             return "AI 分析暂时不可用";
         } catch (Exception e) {
             log.error("调用 AI API 失败: {}", e.getMessage());
-            return generateFallbackResponse(prompt);
+            return generateFallbackResponse(type, prompt);
         }
     }
 
