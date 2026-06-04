@@ -52,7 +52,8 @@ const routes = [
     { path: '/environment', component: EnvironmentData, meta: { requiresAuth: true } },
     { path: '/statistics', component: Statistics, meta: { requiresAuth: true } },
     { path: '/users', component: UserManagement, meta: { requiresAuth: true, requiredRole: 'ADMIN' } },
-    { path: '/ai-assistant', component: AIAssistant, meta: { requiresAuth: true } }
+    { path: '/ai-assistant', component: AIAssistant, meta: { requiresAuth: true } },
+    { path: '/profile', component: UserProfile, meta: { requiresAuth: true } }
 ];
 
 const router = VueRouter.createRouter({
@@ -87,6 +88,7 @@ app.component('environment-data', EnvironmentData);
 app.component('statistics', Statistics);
 app.component('user-management', UserManagement);
 app.component('ai-assistant', AIAssistant);
+app.component('user-profile', UserProfile);
 
 // 全局提供认证状态
 app.provide('authStore', authStore);

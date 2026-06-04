@@ -61,9 +61,10 @@ const AppLayout = {
                             <div class="relative" v-if="user">
                                 <button @click="showUserMenu = !showUserMenu"
                                     class="flex items-center space-x-2 hover:bg-gray-100 rounded-lg px-3 py-2 transition-colors">
-                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm"
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm overflow-hidden"
                                         :class="getRoleBgColor(user.role)">
-                                        <i class="fas fa-user"></i>
+                                        <img v-if="userAvatar" :src="userAvatar" class="w-full h-full object-cover" />
+                                        <i v-else class="fas fa-user"></i>
                                     </div>
                                     <div class="text-left">
                                         <p class="text-sm font-medium text-gray-700">{{ user.username }}</p>
@@ -79,6 +80,11 @@ const AppLayout = {
                                         <p class="text-sm font-medium text-gray-700">{{ user.username }}</p>
                                         <p class="text-xs text-gray-400">角色：{{ getRoleName(user.role) }}</p>
                                     </div>
+                                    <router-link to="/profile"
+                                        class="block px-4 py-3 text-sm text-gray-700 hover:bg-green-50 transition-colors"
+                                        @click="showUserMenu = false">
+                                        <i class="fas fa-user-circle mr-2"></i>个人中心
+                                    </router-link>
                                     <button @click="logout"
                                         class="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
                                         <i class="fas fa-sign-out-alt mr-2"></i>退出登录
@@ -116,6 +122,11 @@ const AppLayout = {
             } catch {
                 return null;
             }
+        });
+
+        const userAvatar = Vue.computed(() => {
+            if (!user.value) return '';
+            return localStorage.getItem('avatar_' + user.value.username) || '';
         });
 
         const menuItems = [
@@ -195,6 +206,7 @@ const AppLayout = {
             currentPageTitle,
             refreshData,
             user,
+            userAvatar,
             showUserMenu,
             logout,
             getRoleName,
