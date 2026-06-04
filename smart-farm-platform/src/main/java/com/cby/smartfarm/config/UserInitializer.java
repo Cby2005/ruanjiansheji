@@ -22,25 +22,30 @@ public class UserInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // 如果没有管理员用户，创建默认管理员
-        if (userRepository.count() == 0) {
-            log.info("创建默认用户账户...");
-            
-            createDefaultUser("admin", "admin123", "ADMIN");
-            createDefaultUser("tech", "tech123", "TECHNICIAN");
-            createDefaultUser("operator", "operator123", "OPERATOR");
-            createDefaultUser("viewer", "viewer123", "VIEWER");
-            
-            log.info("默认用户账户创建完成");
-        }
+        log.info("检查默认用户账户...");
+        createDefaultUser("admin", "123456", "ADMIN");
+        createDefaultUser("tech", "123456", "TECHNICIAN");
+        createDefaultUser("operator", "123456", "OPERATOR");
+        createDefaultUser("viewer", "123456", "VIEWER");
     }
 
     private void createDefaultUser(String username, String password, String role) {
-        User user = new User();
-        user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(password));
-        user.setRole(role);
-        userRepository.save(user);
-        log.info("创建用户: {} (角色: {})", username, role);
+        userRepository.findByUsername(username).ifPresentOrElse(
+            existing -> {
+                // 用户已存在，更新密码为最新值
+                existing.setPassword(passwordEncoder.encode(password));
+                existing.setRole(role);
+                userRepository.save(existing);
+                log.info("更新用户密码: {} (角色: {})", username, role);
+            },
+            () -> {
+                User user = new User();
+                user.setUsername(username);
+                user.setPassword(passwordEncoder.encode(password));
+                user.setRole(role);
+                userRepository.save(user);
+                log.info("创建用户: {} (角色: {})", username, role);
+            }
+        );
     }
 }
