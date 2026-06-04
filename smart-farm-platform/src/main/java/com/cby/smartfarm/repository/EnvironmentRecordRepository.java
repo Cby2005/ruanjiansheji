@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface EnvironmentRecordRepository extends JpaRepository<EnvironmentRecord, Long> {
 
     Optional<EnvironmentRecord> findTopByOrderByCollectTimeDesc();
+
+    List<EnvironmentRecord> findTop24ByOrderByCollectTimeDesc();
 }

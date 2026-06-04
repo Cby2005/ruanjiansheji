@@ -31,84 +31,31 @@ public class DeviceService {
                 .orElseThrow(() -> new IllegalArgumentException("设备不存在: " + deviceCode));
     }
 
-    /**
-     * 【状态模式】启动设备
-     * 通过 DeviceStateResolver 解析当前状态对象，调用状态对象的 start() 方法
-     * 状态转换合法性由状态类自身判断，Service 无需写 if-else
-     */
     @Transactional
     public Device startDevice(String deviceCode) {
         return changeState(deviceCode, "START", DeviceState::start);
     }
 
-    /**
-     * 【状态模式】停止设备
-     */
     @Transactional
     public Device stopDevice(String deviceCode) {
         return changeState(deviceCode, "STOP", DeviceState::stop);
     }
 
-    /**
-     * 【状态模式】标记故障
-     */
     @Transactional
     public Device markFault(String deviceCode) {
         return changeState(deviceCode, "FAULT", DeviceState::fault);
     }
 
-    /**
-     * 【状态模式】进入维护
-     */
     @Transactional
     public Device maintainDevice(String deviceCode) {
         return changeState(deviceCode, "MAINTAIN", DeviceState::maintain);
     }
 
-    /**
-     * 【状态模式】进入校准
-     */
     @Transactional
     public Device calibrateDevice(String deviceCode) {
         return changeState(deviceCode, "CALIBRATE", DeviceState::calibrate);
     }
 
-    /**
-     * 状态模式核心方法：
-     * 1. 查找设备
-     * 2. 通过 DeviceStateResolver 获取当前状态对象
-     * 3. 调用状态对象的方法（内部判断是否允许转换）
-     * 4. 保存设备状态变更
-     * 5. 写入操作日志
-     */
-    private Device changeState(String deviceCode, String action, StateAction stateAction) {
-        Device device = findByCode(deviceCode);
-        String oldState = device.getState();
-
-        // 状态模式：根据当前状态字符串获取对应的状态对象
-        DeviceState currentState = DeviceStateResolver.resolve(oldState);
-        // 状态模式：调用状态对象的方法，非法转换会在状态类内部抛出 BusinessException
-        stateAction.apply(currentState, device);
-
-        deviceRepository.save(device);
-        logOperation(device, action, oldState);
-        LogRecorder.getInstance().info("设备 " + deviceCode + " 状态变更: " + oldState + " → " + device.getState());
-        return device;
-    }
-
-    private void logOperation(Device device, String action, String oldState) {
-        DeviceOperationLog opLog = new DeviceOperationLog();
-        opLog.setDeviceCode(device.getDeviceCode());
-        opLog.setDeviceName(device.getDeviceName());
-        opLog.setAction(action);
-        opLog.setOperator("system");
-        opLog.setResult(oldState + " → " + device.getState());
-        operationLogRepository.save(opLog);
-    }
-
-    /**
-     * 初始化5个默认设备到数据库
-     */
     @Transactional
     public List<Device> initDefaultDevices() {
         String[][] defaults = {
@@ -116,7 +63,8 @@ public class DeviceService {
                 {"LIGHT-001", "A区补光灯", "LIGHT", "A区"},
                 {"FAN-001", "A区通风风机", "FAN", "A区"},
                 {"ROLLER-001", "A区卷帘机", "ROLLER", "A区"},
-                {"HEATER-001", "A区加热器", "HEATER", "A区"}
+                {"HEATER-001", "A区加热器", "HEATER", "A区"},
+                {"FERT-001", "A区变量施肥机", "FERTILIZER", "A区"}
         };
 
         for (String[] d : defaults) {
@@ -131,9 +79,43 @@ public class DeviceService {
             device.setState("STANDBY");
             device.setOnline(true);
             deviceRepository.save(device);
-            log.info("设备初始化: {} - {}", d[0], d[1]);
+            log.info("Default device initialized: {} - {}", d[0], d[1]);
         }
         return deviceRepository.findAll();
+    }
+
+    @Transactional
+    public void logOperation(String deviceCode, String action, String operator, String result) {
+        Device device = findByCode(deviceCode);
+        DeviceOperationLog opLog = new DeviceOperationLog();
+        opLog.setDeviceCode(device.getDeviceCode());
+        opLog.setDeviceName(device.getDeviceName());
+        opLog.setAction(action);
+        opLog.setOperator(operator);
+        opLog.setResult(result);
+        operationLogRepository.save(opLog);
+    }
+
+    private Device changeState(String deviceCode, String action, StateAction stateAction) {
+        Device device = findByCode(deviceCode);
+        String oldState = device.getState();
+        DeviceState currentState = DeviceStateResolver.resolve(oldState);
+        stateAction.apply(currentState, device);
+
+        Device saved = deviceRepository.save(device);
+        logOperation(saved, action, "system", oldState + " -> " + saved.getState());
+        LogRecorder.getInstance().info("设备 " + deviceCode + " 状态变更: " + oldState + " -> " + saved.getState());
+        return saved;
+    }
+
+    private void logOperation(Device device, String action, String operator, String result) {
+        DeviceOperationLog opLog = new DeviceOperationLog();
+        opLog.setDeviceCode(device.getDeviceCode());
+        opLog.setDeviceName(device.getDeviceName());
+        opLog.setAction(action);
+        opLog.setOperator(operator);
+        opLog.setResult(result);
+        operationLogRepository.save(opLog);
     }
 
     @FunctionalInterface

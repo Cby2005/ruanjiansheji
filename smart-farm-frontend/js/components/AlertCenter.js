@@ -69,27 +69,26 @@ const AlertCenter = {
                     </div>
                 </template>
 
-                <el-table :data="filteredAlerts" stripe border style="width: 100%;">
+                <el-table :data="filteredAlerts" stripe border style="width: 100%;" v-loading="loading">
                     <el-table-column prop="id" label="ID" width="70"></el-table-column>
-                    <el-table-column prop="level" label="级别" width="100">
+                    <el-table-column prop="alertLevel" label="级别" width="100">
                         <template #default="{ row }">
-                            <el-tag :type="getLevelType(row.level)" size="small">{{ getLevelText(row.level) }}</el-tag>
+                            <el-tag :type="getLevelType(row.alertLevel)" size="small">{{ getLevelText(row.alertLevel) }}</el-tag>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="title" label="预警标题" width="250"></el-table-column>
-                    <el-table-column prop="description" label="详细描述"></el-table-column>
-                    <el-table-column prop="source" label="来源" width="120"></el-table-column>
-                    <el-table-column prop="time" label="预警时间" width="180"></el-table-column>
-                    <el-table-column prop="status" label="状态" width="100">
+                    <el-table-column prop="alertType" label="预警类型" width="150"></el-table-column>
+                    <el-table-column prop="message" label="详细描述"></el-table-column>
+                    <el-table-column prop="createTime" label="预警时间" width="180"></el-table-column>
+                    <el-table-column prop="handled" label="状态" width="100">
                         <template #default="{ row }">
-                            <el-tag :type="row.status === 'RESOLVED' ? 'success' : 'danger'" size="small">
-                                {{ row.status === 'RESOLVED' ? '已处理' : '未处理' }}
+                            <el-tag :type="row.handled ? 'success' : 'danger'" size="small">
+                                {{ row.handled ? '已处理' : '未处理' }}
                             </el-tag>
                         </template>
                     </el-table-column>
                     <el-table-column label="操作" width="120" fixed="right">
                         <template #default="{ row }">
-                            <el-button v-if="row.status !== 'RESOLVED'" type="success" size="small" link @click="resolveAlert(row)">
+                            <el-button v-if="!row.handled" type="success" size="small" link @click="resolveAlert(row)">
                                 <i class="fas fa-check" style="margin-right: 4px;"></i>处理
                             </el-button>
                             <span v-else style="color: #909399; font-size: 12px;">已处理</span>
@@ -101,27 +100,21 @@ const AlertCenter = {
     `,
 
     setup() {
+        const API_BASE_URL = 'http://localhost:8080';
         const queryLevel = Vue.ref('');
-        const alerts = Vue.ref([
-            { id: 1, level: 'CRITICAL', title: '土壤湿度过低', description: 'A区土壤湿度降至15%，低于安全阈值20%，需要立即灌溉', source: '土壤传感器', time: '2026-06-04 10:30:00', status: 'PENDING' },
-            { id: 2, level: 'WARNING', title: '空气温度偏高', description: '温室温度达到38°C，超过作物适宜温度范围', source: '气象站', time: '2026-06-04 09:15:00', status: 'PENDING' },
-            { id: 3, level: 'INFO', title: 'CO₂浓度变化', description: '大棚CO₂浓度降至350ppm，建议适当通风补充', source: '环境监测', time: '2026-06-04 08:00:00', status: 'RESOLVED' },
-            { id: 4, level: 'WARNING', title: '设备异常', description: '灌溉泵P003运行电流偏高，建议检查', source: '设备监控', time: '2026-06-03 16:45:00', status: 'RESOLVED' },
-            { id: 5, level: 'CRITICAL', title: '虫害预警', description: 'B区发现蚜虫密度超标，需要立即处理', source: '虫情监测', time: '2026-06-03 14:20:00', status: 'PENDING' }
-        ]);
+        const alerts = Vue.ref([]);
+        const loading = Vue.ref(false);
 
-        const alertStats = Vue.computed(() => {
-            return {
-                critical: alerts.value.filter(a => a.level === 'CRITICAL' && a.status === 'PENDING').length,
-                warning: alerts.value.filter(a => a.level === 'WARNING' && a.status === 'PENDING').length,
-                info: alerts.value.filter(a => a.level === 'INFO' && a.status === 'PENDING').length,
-                resolved: alerts.value.filter(a => a.status === 'RESOLVED').length
-            };
+        const alertStats = Vue.ref({ critical: 0, warning: 0, info: 0, resolved: 0 });
+
+        const getHeaders = () => ({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
         });
 
         const filteredAlerts = Vue.computed(() => {
             if (!queryLevel.value) return alerts.value;
-            return alerts.value.filter(a => a.level === queryLevel.value);
+            return alerts.value.filter(a => a.alertLevel === queryLevel.value);
         });
 
         const getLevelType = (level) => {
@@ -130,25 +123,50 @@ const AlertCenter = {
         };
 
         const getLevelText = (level) => {
-            const map = { 'CRITICAL': '严重', 'WARNING': '一般', 'INFO': '提示' };
+            const map = { 'CRITICAL': '严重', 'WARNING': '一般', 'INFO': '提示', 'ERROR': '错误' };
             return map[level] || level;
+        };
+
+        const loadAlerts = async () => {
+            loading.value = true;
+            try {
+                const [listRes, statsRes] = await Promise.all([
+                    fetch(API_BASE_URL + '/api/alerts', { headers: getHeaders() }),
+                    fetch(API_BASE_URL + '/api/alerts/stats', { headers: getHeaders() })
+                ]);
+                const listData = await listRes.json();
+                const statsData = await statsRes.json();
+                if (listData.code === 200) alerts.value = listData.data || [];
+                if (statsData.code === 200) alertStats.value = statsData.data;
+            } catch (e) {
+                console.error(e);
+            }
+            loading.value = false;
         };
 
         const resolveAlert = (alert) => {
             ElementPlus.ElMessageBox.confirm(
-                '确定要将预警「' + alert.title + '」标记为已处理吗？',
+                '确定要将此预警标记为已处理吗？',
                 '确认处理',
                 { confirmButtonText: '确定', cancelButtonText: '取消', type: 'success' }
-            ).then(() => {
-                alert.status = 'RESOLVED';
-                ElementPlus.ElMessage.success('预警已处理');
+            ).then(async () => {
+                try {
+                    const res = await fetch(API_BASE_URL + '/api/alerts/' + alert.id + '/handle', {
+                        method: 'PUT', headers: getHeaders()
+                    });
+                    const data = await res.json();
+                    if (data.code === 200) {
+                        ElementPlus.ElMessage.success('预警已处理');
+                        loadAlerts();
+                    }
+                } catch (e) {
+                    ElementPlus.ElMessage.error('操作失败');
+                }
             }).catch(() => {});
         };
 
-        const loadAlerts = () => {
-            ElementPlus.ElMessage.info('已刷新预警列表');
-        };
+        Vue.onMounted(() => loadAlerts());
 
-        return { queryLevel, alerts, alertStats, filteredAlerts, getLevelType, getLevelText, resolveAlert, loadAlerts };
+        return { queryLevel, alerts, alertStats, filteredAlerts, loading, getLevelType, getLevelText, resolveAlert, loadAlerts };
     }
 };

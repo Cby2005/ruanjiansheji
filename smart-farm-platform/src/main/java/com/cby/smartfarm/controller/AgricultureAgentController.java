@@ -1,9 +1,12 @@
 package com.cby.smartfarm.controller;
 
 import com.cby.smartfarm.agent.AgricultureDecisionService;
+import com.cby.smartfarm.agent.AgentWorkflowService;
 import com.cby.smartfarm.agent.dto.AgentDecisionPlan;
 import com.cby.smartfarm.agent.dto.AgentDecisionRequest;
+import com.cby.smartfarm.agent.dto.AgentWorkflowResult;
 import com.cby.smartfarm.common.Result;
+import com.cby.smartfarm.entity.AgentDecisionLog;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AgricultureAgentController {
 
     private final AgricultureDecisionService agricultureDecisionService;
+    private final AgentWorkflowService agentWorkflowService;
 
     @PostMapping("/decision")
     @Operation(summary = "根据环境数据和情景生成多智能体农业决策方案")
@@ -39,5 +43,17 @@ public class AgricultureAgentController {
         request.setGrowthStage(growthStage);
         request.setScenario(scenario);
         return Result.success(agricultureDecisionService.decide(request));
+    }
+
+    @PostMapping("/workflow/run")
+    @Operation(summary = "执行多 Agent 协作决策完整流程")
+    public Result<AgentWorkflowResult> runWorkflow(@RequestBody(required = false) AgentDecisionRequest request) {
+        return Result.success(agentWorkflowService.run(request));
+    }
+
+    @GetMapping("/logs/latest")
+    @Operation(summary = "查询最近 50 条 Agent 决策日志")
+    public Result<java.util.List<AgentDecisionLog>> latestLogs() {
+        return Result.success(agentWorkflowService.latestLogs());
     }
 }

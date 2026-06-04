@@ -62,4 +62,25 @@ public class StatisticsController {
     public Result<Map<String, Object>> deviceSummary() {
         return Result.success(statisticsService.getDeviceSummary());
     }
+
+    @GetMapping("/devices/distribution")
+    @Operation(summary = "设备状态分布（用于饼图）")
+    public Result<Map<String, Object>> deviceDistribution() {
+        return Result.success(statisticsService.getDeviceDistribution());
+    }
+
+    @GetMapping("/operations/summary")
+    @Operation(summary = "操作类型统计（用于柱状图）")
+    public Result<Map<String, Object>> operationSummary() {
+        return Result.success(statisticsService.getOperationSummary());
+    }
+
+    @GetMapping("/logs")
+    @Operation(summary = "分页查询操作日志")
+    public Result<?> logs(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String deviceCode) {
+        return Result.success(statisticsService.getLogs(page, size, deviceCode));
+    }
 }

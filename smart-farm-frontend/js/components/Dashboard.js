@@ -127,31 +127,56 @@ const Dashboard = {
         const updateChart = (type) => {
             chartType.value = type;
             if (!chartInstance) return;
+            loadTrendData(type);
+        };
 
-            const hours = [];
-            const now = new Date();
-            for (let i = 23; i >= 0; i--) {
-                const h = new Date(now - i * 3600000);
-                hours.push(h.getHours() + ':00');
-            }
-
+        const loadTrendData = async (type) => {
             const configs = {
-                temp: { name: '空气温度(°C)', color: '#f56c6c', base: 25, range: 10 },
-                humidity: { name: '空气湿度(%)', color: '#409eff', base: 60, range: 20 },
-                light: { name: '光照强度(lux)', color: '#e6a23c', base: 5000, range: 3000 }
+                temp: { field: 'airTemperature', name: '空气温度(°C)', color: '#f56c6c' },
+                humidity: { field: 'soilHumidity', name: '土壤湿度(%)', color: '#409eff' },
+                light: { field: 'lightIntensity', name: '光照强度(lux)', color: '#e6a23c' }
             };
             const cfg = configs[type];
-            const data = hours.map(() => Math.round((cfg.base + (Math.random() - 0.5) * cfg.range) * 10) / 10);
+
+            let labels = [];
+            let values = [];
+            try {
+                const res = await fetch(API_BASE_URL + '/api/environment/trend', {
+                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+                });
+                const data = await res.json();
+                if (data.code === 200 && data.data && data.data.length > 0) {
+                    const records = data.data.reverse();
+                    labels = records.map(r => {
+                        const t = r.collectTime || '';
+                        return t.substring(11, 16) || t.substring(5, 16);
+                    });
+                    values = records.map(r => r[cfg.field] || 0);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+
+            if (labels.length === 0) {
+                const hours = [];
+                const now = new Date();
+                for (let i = 23; i >= 0; i--) {
+                    const h = new Date(now - i * 3600000);
+                    hours.push(h.getHours() + ':00');
+                }
+                labels = hours;
+                values = hours.map(() => 0);
+            }
 
             chartInstance.setOption({
                 tooltip: { trigger: 'axis' },
                 grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-                xAxis: { type: 'category', data: hours, boundaryGap: false },
+                xAxis: { type: 'category', data: labels, boundaryGap: false },
                 yAxis: { type: 'value', name: cfg.name },
                 series: [{
                     name: cfg.name,
                     type: 'line',
-                    data: data,
+                    data: values,
                     smooth: true,
                     areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: cfg.color + '40' }, { offset: 1, color: cfg.color + '05' }] } },
                     lineStyle: { color: cfg.color, width: 2 },
@@ -160,9 +185,31 @@ const Dashboard = {
             });
         };
 
-        const initPie = () => {
+        const initPie = async () => {
             if (!pieRef.value) return;
             pieInstance = echarts.init(pieRef.value);
+
+            let pieData = [
+                { value: 0, name: '运行中', itemStyle: { color: '#67c23a' } },
+                { value: 0, name: '待机', itemStyle: { color: '#909399' } },
+                { value: 0, name: '故障', itemStyle: { color: '#f56c6c' } },
+                { value: 0, name: '维护', itemStyle: { color: '#e6a23c' } }
+            ];
+            try {
+                const res = await fetch(API_BASE_URL + '/api/statistics/devices/distribution', {
+                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+                });
+                const data = await res.json();
+                if (data.code === 200 && data.data) {
+                    pieData[0].value = data.data.RUNNING || 0;
+                    pieData[1].value = data.data.STANDBY || 0;
+                    pieData[2].value = data.data.FAULT || 0;
+                    pieData[3].value = data.data.MAINTENANCE || 0;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+
             pieInstance.setOption({
                 tooltip: { trigger: 'item' },
                 legend: { bottom: 0 },
@@ -173,12 +220,7 @@ const Dashboard = {
                     itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
                     label: { show: false },
                     emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
-                    data: [
-                        { value: 3, name: '运行中', itemStyle: { color: '#67c23a' } },
-                        { value: 5, name: '待机', itemStyle: { color: '#909399' } },
-                        { value: 1, name: '故障', itemStyle: { color: '#f56c6c' } },
-                        { value: 1, name: '维护', itemStyle: { color: '#e6a23c' } }
-                    ]
+                    data: pieData
                 }]
             });
         };

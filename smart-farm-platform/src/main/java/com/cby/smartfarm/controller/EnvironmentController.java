@@ -2,10 +2,14 @@ package com.cby.smartfarm.controller;
 
 import com.cby.smartfarm.common.Result;
 import com.cby.smartfarm.entity.EnvironmentRecord;
+import com.cby.smartfarm.repository.EnvironmentRecordRepository;
 import com.cby.smartfarm.service.EnvironmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +22,7 @@ import java.util.Map;
 public class EnvironmentController {
 
     private final EnvironmentService environmentService;
+    private final EnvironmentRecordRepository environmentRecordRepository;
 
     @PostMapping("/collect")
     @Operation(summary = "采集环境数据（仅保存，不触发控制）")
@@ -54,5 +59,20 @@ public class EnvironmentController {
     @Operation(summary = "查询所有环境数据")
     public Result<List<EnvironmentRecord>> list() {
         return Result.success(environmentService.listAll());
+    }
+
+    @GetMapping("/history")
+    @Operation(summary = "分页查询环境历史数据")
+    public Result<Page<EnvironmentRecord>> history(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return Result.success(environmentRecordRepository.findAll(
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "collectTime"))));
+    }
+
+    @GetMapping("/trend")
+    @Operation(summary = "最近24条环境数据趋势（用于图表）")
+    public Result<List<EnvironmentRecord>> trend() {
+        return Result.success(environmentRecordRepository.findTop24ByOrderByCollectTimeDesc());
     }
 }

@@ -43,6 +43,25 @@ public class FarmTaskController {
         return Result.success(farmTaskService.complete(id));
     }
 
+    @PutMapping("/{id}/start")
+    @Operation(summary = "开始任务")
+    public Result<FarmTask> start(@PathVariable Long id) {
+        return Result.success(farmTaskService.start(id));
+    }
+
+    @PutMapping("/{id}/cancel")
+    @Operation(summary = "取消任务")
+    public Result<FarmTask> cancel(@PathVariable Long id) {
+        return Result.success(farmTaskService.cancel(id));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "删除任务")
+    public Result<Void> delete(@PathVariable Long id) {
+        farmTaskService.delete(id);
+        return Result.success(null);
+    }
+
     @GetMapping("/advice")
     @Operation(summary = "根据作物生长期自动生成建议任务")
     public Result<List<Map<String, String>>> advice(

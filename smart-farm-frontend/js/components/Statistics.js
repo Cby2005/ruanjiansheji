@@ -51,7 +51,7 @@ const Statistics = {
                         </el-form>
                     </div>
                 </template>
-                <el-table :data="logs" stripe border style="width: 100%;">
+                <el-table :data="logs" stripe border style="width: 100%;" v-loading="loading">
                     <el-table-column prop="id" label="ID" width="70"></el-table-column>
                     <el-table-column prop="deviceCode" label="设备编码" width="150"></el-table-column>
                     <el-table-column prop="operationType" label="操作类型" width="120">
@@ -85,6 +85,7 @@ const Statistics = {
         const currentPage = Vue.ref(1);
         const pageSize = 10;
         const total = Vue.ref(0);
+        const loading = Vue.ref(false);
 
         const overviewStats = Vue.ref([
             { label: '设备总数', value: '--', icon: 'fas fa-microchip', color: '#409eff' },
@@ -99,8 +100,12 @@ const Statistics = {
         });
 
         const getOpTagType = (type) => {
-            const map = { '启动': 'success', '停止': 'danger', '维护': 'warning', '校准': 'info' };
-            return map[type] || '';
+            if (!type) return '';
+            if (type.includes('启动') || type.includes('START')) return 'success';
+            if (type.includes('停止') || type.includes('STOP')) return 'danger';
+            if (type.includes('维护') || type.includes('MAINTAIN')) return 'warning';
+            if (type.includes('校准') || type.includes('CALIBRATE')) return 'info';
+            return '';
         };
 
         const loadOverview = async () => {
@@ -120,68 +125,122 @@ const Statistics = {
         };
 
         const loadLogs = async () => {
+            loading.value = true;
             try {
                 let url = API_BASE_URL + '/api/statistics/logs?page=' + (currentPage.value - 1) + '&size=' + pageSize;
                 if (queryDeviceCode.value) url += '&deviceCode=' + queryDeviceCode.value;
                 const res = await fetch(url, { headers: getHeaders() });
                 const data = await res.json();
                 if (data.code === 200) {
-                    logs.value = data.data.content || [];
-                    total.value = data.data.totalElements || 0;
+                    const pageData = data.data;
+                    logs.value = pageData.content || [];
+                    total.value = pageData.totalElements || 0;
                 }
             } catch (e) {
                 console.error(e);
             }
+            loading.value = false;
         };
 
-        const initCharts = () => {
-            if (barRef.value) {
-                const bar = echarts.init(barRef.value);
-                bar.setOption({
-                    tooltip: { trigger: 'axis' },
-                    xAxis: { type: 'category', data: ['启动', '停止', '维护', '校准', '故障标记'] },
-                    yAxis: { type: 'value' },
-                    series: [{
-                        type: 'bar',
-                        data: [12, 8, 5, 3, 2],
-                        itemStyle: { color: '#409eff', borderRadius: [4, 4, 0, 0] }
-                    }]
-                });
-                window.addEventListener('resize', () => bar.resize());
+        const initBarChart = async () => {
+            if (!barRef.value) return;
+            const bar = echarts.init(barRef.value);
+
+            let categories = [];
+            let values = [];
+            try {
+                const res = await fetch(API_BASE_URL + '/api/statistics/operations/summary', { headers: getHeaders() });
+                const data = await res.json();
+                if (data.code === 200 && data.data) {
+                    categories = Object.keys(data.data);
+                    values = Object.values(data.data);
+                }
+            } catch (e) {
+                console.error(e);
             }
-            if (radarRef.value) {
-                const radar = echarts.init(radarRef.value);
-                radar.setOption({
-                    tooltip: {},
-                    radar: {
-                        indicator: [
-                            { name: '土壤湿度', max: 100 },
-                            { name: '空气温度', max: 50 },
-                            { name: '空气湿度', max: 100 },
-                            { name: '光照强度', max: 100 },
-                            { name: 'CO₂', max: 2000 }
-                        ]
-                    },
-                    series: [{
-                        type: 'radar',
-                        data: [{
-                            value: [65, 28, 62, 75, 450],
-                            name: '当前环境',
-                            areaStyle: { color: 'rgba(64, 158, 255, 0.2)' },
-                            lineStyle: { color: '#409eff' }
-                        }]
-                    }]
-                });
-                window.addEventListener('resize', () => radar.resize());
+
+            if (categories.length === 0) {
+                categories = ['暂无数据'];
+                values = [0];
             }
+
+            bar.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: categories },
+                yAxis: { type: 'value' },
+                series: [{
+                    type: 'bar',
+                    data: values,
+                    itemStyle: { color: '#409eff', borderRadius: [4, 4, 0, 0] }
+                }]
+            });
+            window.addEventListener('resize', () => bar.resize());
+        };
+
+        const initRadarChart = async () => {
+            if (!radarRef.value) return;
+            const radar = echarts.init(radarRef.value);
+
+            let indicators = [];
+            let values = [];
+            try {
+                const res = await fetch(API_BASE_URL + '/api/statistics/environment/summary', { headers: getHeaders() });
+                const data = await res.json();
+                if (data.code === 200 && data.data) {
+                    const d = data.data;
+                    indicators = [
+                        { name: '土壤湿度', max: 100 },
+                        { name: '空气温度', max: 50 },
+                        { name: '光照强度', max: 100 },
+                        { name: 'CO₂', max: 2000 }
+                    ];
+                    values = [
+                        d['平均土壤湿度(%)'] || 0,
+                        d['平均空气温度(°C)'] || 0,
+                        (d['平均光照强度(lux)'] || 0) / 100,
+                        d['平均CO₂(ppm)'] || 0
+                    ];
+                }
+            } catch (e) {
+                console.error(e);
+            }
+
+            if (indicators.length === 0) {
+                indicators = [
+                    { name: '土壤湿度', max: 100 },
+                    { name: '空气温度', max: 50 },
+                    { name: '空气湿度', max: 100 },
+                    { name: '光照强度', max: 100 },
+                    { name: 'CO₂', max: 2000 }
+                ];
+                values = [0, 0, 0, 0, 0];
+            }
+
+            radar.setOption({
+                tooltip: {},
+                radar: { indicator: indicators },
+                series: [{
+                    type: 'radar',
+                    data: [{
+                        value: values,
+                        name: '当前环境',
+                        areaStyle: { color: 'rgba(64, 158, 255, 0.2)' },
+                        lineStyle: { color: '#409eff' }
+                    }]
+                }]
+            });
+            window.addEventListener('resize', () => radar.resize());
         };
 
         Vue.onMounted(async () => {
             await loadOverview();
             await loadLogs();
-            Vue.nextTick(() => initCharts());
+            Vue.nextTick(() => {
+                initBarChart();
+                initRadarChart();
+            });
         });
 
-        return { overviewStats, barRef, radarRef, logs, queryDeviceCode, currentPage, pageSize, total, loadLogs, getOpTagType };
+        return { overviewStats, barRef, radarRef, logs, queryDeviceCode, currentPage, pageSize, total, loading, loadLogs, getOpTagType };
     }
 };

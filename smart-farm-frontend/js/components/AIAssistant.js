@@ -1,90 +1,175 @@
 const AIAssistant = {
     template: `
-        <div>
-            <el-row :gutter="20">
-                <!-- 左侧：Agent决策时间线 -->
-                <el-col :span="16">
-                    <el-card shadow="hover" style="margin-bottom: 20px;">
+        <div class="agent-workbench">
+            <el-row :gutter="16">
+                <el-col :span="6">
+                    <el-card shadow="never" style="margin-bottom: 16px;">
                         <template #header>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-weight: bold;"><i class="fas fa-robot" style="margin-right: 8px; color: #409eff;"></i>Agent 决策过程</span>
-                                <el-button type="primary" size="small" @click="runAllAgents">
-                                    <i class="fas fa-play" style="margin-right: 4px;"></i>执行全量分析
-                                </el-button>
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <span style="font-weight: 700;">多 Agent 决策</span>
+                                <el-tag size="small" type="success">规则型</el-tag>
                             </div>
                         </template>
-                        <el-timeline>
-                            <el-timeline-item
-                                v-for="(item, index) in timelineData"
-                                :key="index"
-                                :timestamp="item.time"
-                                placement="top"
-                                :type="item.type"
-                                :hollow="item.hollow">
-                                <el-card shadow="never" style="margin-top: 5px;">
-                                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                        <el-tag :type="item.tagType" size="small" style="margin-right: 8px;">{{ item.agent }}</el-tag>
-                                        <span style="font-weight: bold; font-size: 14px;">{{ item.title }}</span>
-                                    </div>
-                                    <p style="color: #606266; font-size: 13px; margin: 0;">{{ item.content }}</p>
-                                    <div v-if="item.suggestion" style="margin-top: 8px; padding: 8px 12px; background: #f0f9eb; border-radius: 4px; border-left: 3px solid #67c23a;">
-                                        <span style="font-size: 12px; color: #67c23a; font-weight: bold;">建议：</span>
-                                        <span style="font-size: 12px; color: #606266;">{{ item.suggestion }}</span>
-                                    </div>
-                                </el-card>
-                            </el-timeline-item>
-                        </el-timeline>
-                        <el-empty v-if="timelineData.length === 0" description="暂无决策记录，点击上方按钮开始分析"></el-empty>
+                        <el-form label-position="top" size="small">
+                            <el-form-item label="作物">
+                                <el-select v-model="form.crop" style="width: 100%;">
+                                    <el-option label="番茄 tomato" value="tomato"></el-option>
+                                    <el-option label="黄瓜 cucumber" value="cucumber"></el-option>
+                                    <el-option label="草莓 strawberry" value="strawberry"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="生长阶段">
+                                <el-select v-model="form.growthStage" style="width: 100%;">
+                                    <el-option label="苗期 seedling" value="seedling"></el-option>
+                                    <el-option label="开花期 flowering" value="flowering"></el-option>
+                                    <el-option label="结果期 fruiting" value="fruiting"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="当前情景">
+                                <el-input v-model="form.scenario" type="textarea" :rows="3"></el-input>
+                            </el-form-item>
+                            <el-button type="primary" style="width: 100%;" :loading="running" @click="runWorkflow">
+                                <i class="fas fa-play" style="margin-right: 6px;"></i>执行完整决策流程
+                            </el-button>
+                        </el-form>
+                    </el-card>
+
+                    <el-card shadow="never">
+                        <template #header><span style="font-weight: 700;">流程链路</span></template>
+                        <el-steps direction="vertical" :active="activeStep" finish-status="success" style="height: 420px;">
+                            <el-step v-for="item in pipeline" :key="item" :title="item"></el-step>
+                        </el-steps>
                     </el-card>
                 </el-col>
 
-                <!-- 右侧：智能问答 + 快速分析 -->
-                <el-col :span="8">
-                    <!-- 智能问答 -->
-                    <el-card shadow="hover" style="margin-bottom: 20px;">
-                        <template #header>
-                            <span style="font-weight: bold;"><i class="fas fa-comments" style="margin-right: 8px; color: #67c23a;"></i>智能问答</span>
-                        </template>
-                        <div style="height: 300px; overflow-y: auto; border: 1px solid #ebeef5; border-radius: 4px; padding: 10px; margin-bottom: 10px;" ref="chatRef">
-                            <div v-for="(msg, i) in chatMessages" :key="i" :style="{ textAlign: msg.role === 'user' ? 'right' : 'left', marginBottom: '10px' }">
-                                <div :style="{
-                                    display: 'inline-block',
-                                    padding: '8px 12px',
-                                    borderRadius: '8px',
-                                    maxWidth: '85%',
-                                    fontSize: '13px',
-                                    background: msg.role === 'user' ? '#409eff' : '#f4f4f5',
-                                    color: msg.role === 'user' ? '#fff' : '#303133'
-                                }">{{ msg.text }}</div>
-                            </div>
-                        </div>
-                        <el-input v-model="question" placeholder="输入问题..." @keyup.enter="askQuestion">
-                            <template #append>
-                                <el-button @click="askQuestion"><i class="fas fa-paper-plane"></i></el-button>
-                            </template>
-                        </el-input>
-                    </el-card>
+                <el-col :span="18">
+                    <el-row :gutter="16" style="margin-bottom: 16px;">
+                        <el-col :span="6">
+                            <el-card shadow="never">
+                                <div class="metric-label">综合风险</div>
+                                <div class="metric-value" :style="{ color: riskColor }">{{ riskText }}</div>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="6">
+                            <el-card shadow="never">
+                                <div class="metric-label">工作流 ID</div>
+                                <div class="metric-value small">{{ result?.workflowId || '-' }}</div>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="6">
+                            <el-card shadow="never">
+                                <div class="metric-label">生成命令</div>
+                                <div class="metric-value">{{ result?.commands?.length || 0 }}</div>
+                            </el-card>
+                        </el-col>
+                        <el-col :span="6">
+                            <el-card shadow="never">
+                                <div class="metric-label">本次预警</div>
+                                <div class="metric-value">{{ result?.alerts?.length || 0 }}</div>
+                            </el-card>
+                        </el-col>
+                    </el-row>
 
-                    <!-- 快速分析 -->
-                    <el-card shadow="hover">
-                        <template #header>
-                            <span style="font-weight: bold;"><i class="fas fa-bolt" style="margin-right: 8px; color: #e6a23c;"></i>快速分析</span>
-                        </template>
-                        <div style="display: flex; flex-direction: column; gap: 10px;">
-                            <el-button type="primary" plain @click="analyzeEnvironment" :loading="loadingEnv">
-                                <i class="fas fa-leaf" style="margin-right: 6px;"></i>环境分析
-                            </el-button>
-                            <el-button type="warning" plain @click="analyzeAlert" :loading="loadingAlert">
-                                <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>预警分析
-                            </el-button>
-                            <el-button type="success" plain @click="analyzeIrrigation" :loading="loadingIrrigation">
-                                <i class="fas fa-tint" style="margin-right: 6px;"></i>灌溉建议
-                            </el-button>
-                        </div>
-                        <div v-if="analysisResult" style="margin-top: 15px; padding: 12px; background: #f0f9eb; border-radius: 4px; border-left: 3px solid #67c23a;">
-                            <p style="margin: 0; font-size: 13px; color: #303133; line-height: 1.6;">{{ analysisResult }}</p>
-                        </div>
-                    </el-card>
+                    <el-tabs v-model="activeTab" type="border-card">
+                        <el-tab-pane label="专家分析" name="agents">
+                            <el-empty v-if="!result" description="尚未执行决策流程"></el-empty>
+                            <el-row v-else :gutter="12">
+                                <el-col v-for="agent in result.decisionPlan.agentFindings" :key="agent.agentName" :span="12" style="margin-bottom: 12px;">
+                                    <el-card shadow="never">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                            <strong>{{ agent.agentName }}</strong>
+                                            <el-tag :type="tagType(agent.riskLevel)" size="small">{{ agent.riskLevel }}</el-tag>
+                                        </div>
+                                        <div style="color: #606266; font-size: 13px; margin-bottom: 8px;">{{ agent.role }}</div>
+                                        <el-alert :title="agent.conclusion" :type="tagType(agent.riskLevel)" :closable="false" show-icon style="margin-bottom: 10px;"></el-alert>
+                                        <div class="list-title">依据</div>
+                                        <ul class="compact-list">
+                                            <li v-for="item in agent.evidence" :key="item">{{ item }}</li>
+                                        </ul>
+                                        <div class="list-title">建议</div>
+                                        <ul class="compact-list">
+                                            <li v-for="item in agent.recommendations" :key="item">{{ item }}</li>
+                                        </ul>
+                                    </el-card>
+                                </el-col>
+                            </el-row>
+                        </el-tab-pane>
+
+                        <el-tab-pane label="安全审核" name="safety">
+                            <el-empty v-if="!result" description="尚未执行决策流程"></el-empty>
+                            <template v-else>
+                                <el-alert
+                                    :title="result.safetyReview.conclusion"
+                                    :type="result.safetyReview.rejectedCommands.length ? 'warning' : 'success'"
+                                    :closable="false"
+                                    show-icon
+                                    style="margin-bottom: 12px;">
+                                </el-alert>
+                                <el-table :data="result.commands" border size="small">
+                                    <el-table-column prop="deviceCode" label="设备编号" width="120"></el-table-column>
+                                    <el-table-column prop="deviceName" label="设备"></el-table-column>
+                                    <el-table-column prop="action" label="动作" width="100"></el-table-column>
+                                    <el-table-column prop="reason" label="原因"></el-table-column>
+                                    <el-table-column label="审核" width="100">
+                                        <template #default="{ row }">
+                                            <el-tag :type="row.approved ? 'success' : 'danger'">{{ row.approved ? '通过' : '拦截' }}</el-tag>
+                                        </template>
+                                    </el-table-column>
+                                </el-table>
+                            </template>
+                        </el-tab-pane>
+
+                        <el-tab-pane label="虚拟执行" name="execution">
+                            <el-empty v-if="!result" description="尚未执行决策流程"></el-empty>
+                            <el-table v-else :data="result.executionResults" border size="small">
+                                <el-table-column prop="deviceCode" label="设备编号" width="120"></el-table-column>
+                                <el-table-column prop="action" label="动作" width="100"></el-table-column>
+                                <el-table-column prop="result" label="执行结果"></el-table-column>
+                                <el-table-column label="状态" width="100">
+                                    <template #default="{ row }">
+                                        <el-tag :type="row.success ? 'success' : 'info'">{{ row.success ? '已执行' : '未执行' }}</el-tag>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </el-tab-pane>
+
+                        <el-tab-pane label="采集与预警" name="environment">
+                            <el-empty v-if="!result" description="尚未执行决策流程"></el-empty>
+                            <template v-else>
+                                <el-descriptions title="模拟传感器数据" :column="4" border size="small" style="margin-bottom: 16px;">
+                                    <el-descriptions-item label="土壤温度">{{ env.soilTemperature }}</el-descriptions-item>
+                                    <el-descriptions-item label="土壤湿度">{{ env.soilHumidity }}</el-descriptions-item>
+                                    <el-descriptions-item label="pH">{{ env.phValue }}</el-descriptions-item>
+                                    <el-descriptions-item label="EC">{{ env.ecValue }}</el-descriptions-item>
+                                    <el-descriptions-item label="养分">{{ env.nutrient }}</el-descriptions-item>
+                                    <el-descriptions-item label="空气温度">{{ env.airTemperature }}</el-descriptions-item>
+                                    <el-descriptions-item label="空气湿度">{{ env.airHumidity }}</el-descriptions-item>
+                                    <el-descriptions-item label="光照">{{ env.lightIntensity }}</el-descriptions-item>
+                                    <el-descriptions-item label="CO2">{{ env.co2 }}</el-descriptions-item>
+                                    <el-descriptions-item label="风速">{{ env.windSpeed }}</el-descriptions-item>
+                                    <el-descriptions-item label="降雨">{{ env.rainfall }}</el-descriptions-item>
+                                    <el-descriptions-item label="虫情">{{ env.pestCount }} / {{ env.pestType }}</el-descriptions-item>
+                                </el-descriptions>
+                                <el-table :data="result.alerts" border size="small">
+                                    <el-table-column prop="alertType" label="预警类型"></el-table-column>
+                                    <el-table-column prop="alertLevel" label="级别" width="100"></el-table-column>
+                                    <el-table-column prop="message" label="信息"></el-table-column>
+                                </el-table>
+                            </template>
+                        </el-tab-pane>
+
+                        <el-tab-pane label="决策日志" name="logs">
+                            <el-button size="small" @click="loadLogs" style="margin-bottom: 10px;">刷新日志</el-button>
+                            <el-table :data="logs" border size="small" height="420">
+                                <el-table-column prop="workflowId" label="流程ID" width="140"></el-table-column>
+                                <el-table-column prop="agentName" label="Agent" width="160"></el-table-column>
+                                <el-table-column prop="stage" label="阶段" width="150"></el-table-column>
+                                <el-table-column prop="riskLevel" label="风险" width="90"></el-table-column>
+                                <el-table-column prop="outputSummary" label="输出摘要"></el-table-column>
+                                <el-table-column prop="createTime" label="时间" width="180"></el-table-column>
+                            </el-table>
+                        </el-tab-pane>
+                    </el-tabs>
                 </el-col>
             </el-row>
         </div>
@@ -92,116 +177,99 @@ const AIAssistant = {
 
     setup() {
         const API_BASE_URL = 'http://localhost:8080';
-        const question = Vue.ref('');
-        const chatMessages = Vue.ref([]);
-        const analysisResult = Vue.ref('');
-        const chatRef = Vue.ref(null);
-        const loadingEnv = Vue.ref(false);
-        const loadingAlert = Vue.ref(false);
-        const loadingIrrigation = Vue.ref(false);
-
-        const timelineData = Vue.ref([]);
-
-        const getHeaders = () => ({
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        const running = Vue.ref(false);
+        const result = Vue.ref(null);
+        const logs = Vue.ref([]);
+        const activeTab = Vue.ref('agents');
+        const activeStep = Vue.ref(0);
+        const pipeline = Vue.ref([
+            '模拟传感器数据',
+            '环境数据采集中心',
+            '专家 Agent 分析',
+            '总控调度汇总',
+            '安全审核',
+            '生成控制命令',
+            '虚拟设备执行',
+            '记录日志与预警'
+        ]);
+        const form = Vue.reactive({
+            crop: 'tomato',
+            growthStage: 'flowering',
+            scenario: '连续阴雨后出现虫害压力'
         });
 
-        const cleanResult = (text) => {
-            return (text || '').replace(/[*#\-]/g, '').replace(/\n+/g, ' ').trim();
-        };
+        const headers = () => ({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
+        });
 
-        const runAllAgents = async () => {
+        const runWorkflow = async () => {
+            running.value = true;
+            activeStep.value = 1;
             try {
-                const res = await fetch(API_BASE_URL + '/api/agent/analyze-environment', {
+                const res = await fetch(API_BASE_URL + '/api/agents/workflow/run', {
                     method: 'POST',
-                    headers: getHeaders()
+                    headers: headers(),
+                    body: JSON.stringify(form)
                 });
                 const data = await res.json();
-                if (data.code === 200) {
-                    const result = data.data;
-                    const now = new Date().toLocaleString('zh-CN');
-                    timelineData.value = [
-                        { time: now, agent: '土壤专家', title: '土壤状态评估', content: '当前土壤湿度处于正常范围', suggestion: '建议适当灌溉保持湿度', type: 'primary', tagType: '', hollow: false },
-                        { time: now, agent: '气象专家', title: '气象趋势分析', content: '温度变化趋势正常', suggestion: '注意防暑降温', type: 'success', tagType: 'success', hollow: false },
-                        { time: now, agent: '虫情专家', title: '虫情风险评估', content: '当前虫情风险较低', suggestion: '定期巡查', type: 'warning', tagType: 'warning', hollow: false },
-                        { time: now, agent: '安全审核', title: '综合安全评估', content: cleanResult(result), suggestion: '', type: 'info', tagType: 'info', hollow: false }
-                    ];
-                    ElementPlus.ElMessage.success('Agent 分析完成');
+                if (data.code !== 200) {
+                    throw new Error(data.message || '执行失败');
                 }
-            } catch (e) {
-                ElementPlus.ElMessage.error('分析失败');
+                result.value = data.data;
+                pipeline.value = data.data.pipeline || pipeline.value;
+                activeStep.value = pipeline.value.length;
+                activeTab.value = 'agents';
+                logs.value = data.data.decisionLogs || [];
+                ElementPlus.ElMessage.success('多 Agent 决策流程执行完成');
+            } catch (error) {
+                ElementPlus.ElMessage.error(error.message || '执行失败');
+                activeStep.value = 0;
+            } finally {
+                running.value = false;
             }
         };
 
-        const analyzeEnvironment = async () => {
-            loadingEnv.value = true;
-            try {
-                const res = await fetch(API_BASE_URL + '/api/agent/analyze-environment', {
-                    method: 'POST', headers: getHeaders()
-                });
-                const data = await res.json();
-                analysisResult.value = data.code === 200 ? cleanResult(data.data) : '分析失败';
-            } catch (e) {
-                analysisResult.value = '请求失败';
+        const loadLogs = async () => {
+            const res = await fetch(API_BASE_URL + '/api/agents/logs/latest', { headers: headers() });
+            const data = await res.json();
+            if (data.code === 200) {
+                logs.value = data.data;
             }
-            loadingEnv.value = false;
         };
 
-        const analyzeAlert = async () => {
-            loadingAlert.value = true;
-            try {
-                const res = await fetch(API_BASE_URL + '/api/agent/analyze-alerts', {
-                    method: 'POST', headers: getHeaders()
-                });
-                const data = await res.json();
-                analysisResult.value = data.code === 200 ? cleanResult(data.data) : '分析失败';
-            } catch (e) {
-                analysisResult.value = '请求失败';
-            }
-            loadingAlert.value = false;
+        const tagType = (risk) => {
+            if (risk === 'HIGH') return 'danger';
+            if (risk === 'MEDIUM') return 'warning';
+            return 'success';
         };
 
-        const analyzeIrrigation = async () => {
-            loadingIrrigation.value = true;
-            try {
-                const res = await fetch(API_BASE_URL + '/api/agent/ask', {
-                    method: 'POST', headers: getHeaders(),
-                    body: JSON.stringify({ question: '请给出灌溉建议' })
-                });
-                const data = await res.json();
-                analysisResult.value = data.code === 200 ? cleanResult(data.data.answer || data.data) : '分析失败';
-            } catch (e) {
-                analysisResult.value = '请求失败';
-            }
-            loadingIrrigation.value = false;
-        };
+        const riskText = Vue.computed(() => result.value?.decisionPlan?.overallRiskLevel || '-');
+        const riskColor = Vue.computed(() => {
+            const risk = riskText.value;
+            if (risk === 'HIGH') return '#f56c6c';
+            if (risk === 'MEDIUM') return '#e6a23c';
+            if (risk === 'LOW') return '#67c23a';
+            return '#909399';
+        });
+        const env = Vue.computed(() => result.value?.environmentRecord || {});
 
-        const askQuestion = async () => {
-            if (!question.value.trim()) return;
-            const q = question.value;
-            chatMessages.value.push({ role: 'user', text: q });
-            question.value = '';
-            Vue.nextTick(() => { if (chatRef.value) chatRef.value.scrollTop = chatRef.value.scrollHeight; });
-
-            try {
-                const res = await fetch(API_BASE_URL + '/api/agent/ask', {
-                    method: 'POST', headers: getHeaders(),
-                    body: JSON.stringify({ question: q })
-                });
-                const data = await res.json();
-                const answer = data.code === 200 ? cleanResult(data.data.answer || data.data) : '抱歉，暂时无法回答';
-                chatMessages.value.push({ role: 'assistant', text: answer });
-            } catch (e) {
-                chatMessages.value.push({ role: 'assistant', text: '请求失败，请稍后重试' });
-            }
-            Vue.nextTick(() => { if (chatRef.value) chatRef.value.scrollTop = chatRef.value.scrollHeight; });
-        };
+        Vue.onMounted(loadLogs);
 
         return {
-            question, chatMessages, analysisResult, chatRef, timelineData,
-            loadingEnv, loadingAlert, loadingIrrigation,
-            runAllAgents, analyzeEnvironment, analyzeAlert, analyzeIrrigation, askQuestion
+            form,
+            running,
+            result,
+            logs,
+            activeTab,
+            activeStep,
+            pipeline,
+            env,
+            riskText,
+            riskColor,
+            tagType,
+            runWorkflow,
+            loadLogs
         };
     }
 };

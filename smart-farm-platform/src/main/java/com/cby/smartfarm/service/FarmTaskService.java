@@ -55,6 +55,15 @@ public class FarmTaskService {
     }
 
     @Transactional
+    public FarmTask start(Long id) {
+        FarmTask task = findById(id);
+        task.setStatus("DOING");
+        FarmTask saved = farmTaskRepository.save(task);
+        log.info("任务开始: {}", saved.getTaskName());
+        return saved;
+    }
+
+    @Transactional
     public FarmTask complete(Long id) {
         FarmTask task = findById(id);
         task.setStatus("DONE");
@@ -62,6 +71,22 @@ public class FarmTaskService {
         FarmTask saved = farmTaskRepository.save(task);
         log.info("任务完成: {}", saved.getTaskName());
         return saved;
+    }
+
+    @Transactional
+    public FarmTask cancel(Long id) {
+        FarmTask task = findById(id);
+        task.setStatus("CANCELLED");
+        FarmTask saved = farmTaskRepository.save(task);
+        log.info("任务取消: {}", saved.getTaskName());
+        return saved;
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        FarmTask task = findById(id);
+        farmTaskRepository.delete(task);
+        log.info("任务删除: {}", task.getTaskName());
     }
 
     /**

@@ -1,10 +1,14 @@
 package com.cby.smartfarm.service;
 
+import com.cby.smartfarm.entity.Device;
 import com.cby.smartfarm.entity.DeviceOperationLog;
 import com.cby.smartfarm.entity.EnvironmentRecord;
 import com.cby.smartfarm.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -12,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -112,5 +117,33 @@ public class StatisticsService {
         summary.put("故障设备数", fault);
         summary.put("今日操作次数", todayOps);
         return summary;
+    }
+
+    public Map<String, Object> getDeviceDistribution() {
+        List<Device> devices = deviceRepository.findAll();
+        Map<String, Object> dist = new LinkedHashMap<>();
+        dist.put("RUNNING", devices.stream().filter(d -> "RUNNING".equals(d.getState())).count());
+        dist.put("STANDBY", devices.stream().filter(d -> "STANDBY".equals(d.getState())).count());
+        dist.put("FAULT", devices.stream().filter(d -> "FAULT".equals(d.getState())).count());
+        dist.put("MAINTENANCE", devices.stream().filter(d -> "MAINTENANCE".equals(d.getState())).count());
+        return dist;
+    }
+
+    public Map<String, Object> getOperationSummary() {
+        List<DeviceOperationLog> logs = deviceOperationLogRepository.findAll();
+        Map<String, Object> summary = new LinkedHashMap<>();
+        Map<String, Long> byType = logs.stream()
+                .filter(l -> l.getOperationType() != null)
+                .collect(Collectors.groupingBy(DeviceOperationLog::getOperationType, Collectors.counting()));
+        summary.putAll(byType);
+        return summary;
+    }
+
+    public Page<DeviceOperationLog> getLogs(int page, int size, String deviceCode) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "operationTime"));
+        if (deviceCode != null && !deviceCode.isEmpty()) {
+            return deviceOperationLogRepository.findByDeviceCode(deviceCode, pageRequest);
+        }
+        return deviceOperationLogRepository.findAll(pageRequest);
     }
 }
