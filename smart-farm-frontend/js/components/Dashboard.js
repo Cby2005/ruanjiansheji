@@ -61,6 +61,16 @@ const Dashboard = {
         <div class="dashboard-page">
             <!-- ===== Hero 区域 ===== -->
             <section class="hero-section">
+                <video
+                    src="./assets/videos/strawberry-greenhouse.mp4"
+                    autoplay
+                    muted
+                    loop
+                    playsinline
+                    preload="metadata"
+                    aria-hidden="true"
+                    style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.42;"
+                ></video>
                 <div class="hero-bg"></div>
                 <div class="hero-content">
                     <div class="hero-left">
