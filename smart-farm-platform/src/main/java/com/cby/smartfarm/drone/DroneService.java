@@ -4,6 +4,7 @@ import com.cby.smartfarm.common.BusinessException;
 import com.cby.smartfarm.entity.FarmTask;
 import com.cby.smartfarm.service.FarmTaskService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
@@ -27,6 +28,9 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class DroneService implements ApplicationRunner {
+    private static final Set<String> POINT_TYPES = Set.of("START", "NORMAL", "ABNORMAL", "END", "KEY", "DISEASE_PRONE");
+    private static final Set<String> ROUTE_TYPES = Set.of("DAILY", "DAILY_INSPECTION", "DISEASE_INSPECTION", "ABNORMAL_RECHECK");
+    private static final Set<String> ALGORITHMS = Set.of("ORDER", "NEAREST");
     private final DroneDeviceRepository devices;
     private final DroneInspectionPointRepository points;
     private final DroneRoutePlanRepository routes;
@@ -81,17 +85,22 @@ public class DroneService implements ApplicationRunner {
     @Transactional
     public DroneInspectionPoint savePoint(DroneInspectionPoint input) {
         require(input.getPointName(), "巡检点名称不能为空");
-        if (input.getX() == null || input.getY() == null || input.getZ() == null) {
-            throw new BusinessException("巡检点坐标不能为空");
-        }
+        if (input.getGreenhouseId() == null) throw new BusinessException("请选择所属温室");
+        validateCoordinates(input.getLongitude(), input.getLatitude());
+        String pointType = StringUtils.hasText(input.getPointType()) ? input.getPointType() : "NORMAL";
+        if (!POINT_TYPES.contains(pointType)) throw new BusinessException("点位类型不合法");
         DroneInspectionPoint target = input.getId() == null ? new DroneInspectionPoint() : point(input.getId());
         target.setPointName(input.getPointName());
         target.setGreenhouseId(input.getGreenhouseId());
         target.setAreaName(input.getAreaName());
-        target.setX(input.getX());
-        target.setY(input.getY());
-        target.setZ(input.getZ());
-        target.setPointType(StringUtils.hasText(input.getPointType()) ? input.getPointType() : "NORMAL");
+        target.setX(value(input.getX()));
+        target.setY(value(input.getY()));
+        double altitude = input.getAltitude() == null ? 1.5D : input.getAltitude();
+        target.setZ(altitude);
+        target.setLongitude(input.getLongitude());
+        target.setLatitude(input.getLatitude());
+        target.setAltitude(altitude);
+        target.setPointType(pointType);
         target.setRemark(input.getRemark());
         return points.save(target);
     }
@@ -102,17 +111,23 @@ public class DroneService implements ApplicationRunner {
 
     @Transactional
     public DroneRoutePlan generateRoute(RouteGenerateRequest request) {
+        if (!ROUTE_TYPES.contains(request.routeType())) throw new BusinessException("路径类型不合法");
+        if (!ALGORITHMS.contains(request.algorithmType())) throw new BusinessException("路径算法不合法");
         Map<Long, DroneInspectionPoint> pointMap = new LinkedHashMap<>();
         points.findAllById(request.pointIds()).forEach(p -> pointMap.put(p.getId(), p));
         if (pointMap.size() != request.pointIds().size()) {
             throw new BusinessException("部分巡检点不存在");
         }
-        List<DronePathPlanner.Point> inspectionPoints = request.pointIds().stream()
-                .map(pointMap::get)
-                .map(p -> new DronePathPlanner.Point(p.getId(), p.getPointName(), p.getX(), p.getY(), p.getZ()))
+        List<DroneInspectionPoint> selected = request.pointIds().stream().map(pointMap::get).toList();
+        selected.forEach(p -> validateCoordinates(p.getLongitude(), p.getLatitude()));
+        DroneInspectionPoint startPoint = selected.stream().filter(p -> "START".equals(p.getPointType())).findFirst().orElse(selected.get(0));
+        DroneInspectionPoint endPoint = selected.stream().filter(p -> "END".equals(p.getPointType())).findFirst().orElse(selected.get(selected.size() - 1));
+        var start = pathPoint(startPoint);
+        var end = pathPoint(endPoint);
+        List<DronePathPlanner.Point> inspectionPoints = selected.stream()
+                .filter(p -> p != startPoint && p != endPoint)
+                .map(DroneService::pathPoint)
                 .toList();
-        var start = new DronePathPlanner.Point(null, "起点", request.startX(), request.startY(), request.startZ());
-        var end = new DronePathPlanner.Point(null, "终点", request.endX(), request.endY(), request.endZ());
         var plan = DronePathPlanner.plan(start, end, inspectionPoints, request.algorithmType());
 
         DroneRoutePlan route = new DroneRoutePlan();
@@ -120,29 +135,47 @@ public class DroneService implements ApplicationRunner {
         route.setRouteName(request.routeName());
         route.setGreenhouseId(request.greenhouseId());
         route.setRouteType(request.routeType());
-        route.setStartPoint(json(Map.of("x", request.startX(), "y", request.startY(), "z", request.startZ())));
-        route.setEndPoint(json(Map.of("x", request.endX(), "y", request.endY(), "z", request.endZ())));
+        route.setAlgorithmType(request.algorithmType());
+        route.setStartPoint(json(Map.of("longitude", start.longitude(), "latitude", start.latitude(), "altitude", start.altitude())));
+        route.setEndPoint(json(Map.of("longitude", end.longitude(), "latitude", end.latitude(), "altitude", end.altitude())));
         List<Map<String, Object>> waypoints = new ArrayList<>();
         for (int i = 0; i < plan.points().size(); i++) {
             var p = plan.points().get(i);
             Map<String, Object> waypoint = new LinkedHashMap<>();
             waypoint.put("pointId", p.id());
             waypoint.put("pointName", p.name());
-            waypoint.put("x", p.x());
-            waypoint.put("y", p.y());
-            waypoint.put("z", p.z());
-            waypoint.put("orderIndex", i);
+            waypoint.put("longitude", p.longitude());
+            waypoint.put("latitude", p.latitude());
+            waypoint.put("altitude", p.altitude());
+            waypoint.put("pointType", p.pointType());
+            waypoint.put("areaName", p.areaName());
+            waypoint.put("remark", p.remark());
+            waypoint.put("orderIndex", i + 1);
             waypoints.add(waypoint);
         }
         route.setWaypoints(json(waypoints));
-        route.setFlightHeight(request.startZ());
+        route.setFlightHeight(start.altitude());
         route.setTotalDistance(plan.distanceMeters());
-        route.setEstimatedTime(plan.minutes());
+        route.setEstimatedTime(plan.estimatedSeconds());
         return routes.save(route);
     }
 
-    public Page<DroneRoutePlan> listRoutes(int page, int size) {
-        return page(routes.findAll(), page, size);
+    public Page<DroneRoutePlan> listRoutes(String routeName, String routeType, String algorithmType, int page, int size) {
+        return page(routes.findAll().stream()
+                .filter(r -> !StringUtils.hasText(routeName) || contains(r.getRouteName(), routeName))
+                .filter(r -> !StringUtils.hasText(routeType) || routeType.equals(r.getRouteType()))
+                .filter(r -> !StringUtils.hasText(algorithmType) || algorithmType.equals(r.getAlgorithmType()))
+                .toList(), page, size);
+    }
+
+    public Map<String, Object> routeView(DroneRoutePlan route) {
+        Map<String, Object> view = objectMapper.convertValue(route, new TypeReference<>() {});
+        try {
+            view.put("waypoints", objectMapper.readValue(route.getWaypoints(), new TypeReference<List<Map<String, Object>>>() {}));
+            return view;
+        } catch (JsonProcessingException e) {
+            throw new BusinessException("路径数据解析失败");
+        }
     }
 
     public DroneRoutePlan route(Long id) {
@@ -310,6 +343,47 @@ public class DroneService implements ApplicationRunner {
         return points.findById(id).orElseThrow(() -> new BusinessException("巡检点不存在"));
     }
 
+    @Transactional
+    public List<DroneInspectionPoint> initDefaultPoints() {
+        List<DroneInspectionPoint> existing = new ArrayList<>(points.findAll().stream()
+                .sorted(Comparator.comparing(DroneBaseEntity::getId)).toList());
+        String[] names = {"起飞点", "A区巡检点", "B区巡检点", "C区异常复核点", "返航点"};
+        String[] areas = {"基地入口", "A区", "B区", "C区", "基地入口"};
+        String[] types = {"START", "NORMAL", "NORMAL", "ABNORMAL", "END"};
+        double[] longitudes = {113.809058, 113.809100, 113.809250, 113.809360, 113.809058};
+        double[] latitudes = {34.136323, 34.136420, 34.136500, 34.136380, 34.136323};
+        for (int i = 0; i < names.length; i++) {
+            DroneInspectionPoint point = i < existing.size() ? existing.get(i) : new DroneInspectionPoint();
+            if (point.getLongitude() == null || point.getLatitude() == null) {
+                point.setPointName(names[i]);
+                point.setGreenhouseId(1L);
+                point.setAreaName(areas[i]);
+                point.setLongitude(longitudes[i]);
+                point.setLatitude(latitudes[i]);
+                point.setAltitude(1.5D);
+                point.setX(i * 8D);
+                point.setY((i % 2 + 1) * 6D);
+                point.setZ(1.5D);
+                point.setPointType(types[i]);
+                point.setRemark(i == 3 ? "草莓病害重点复核区域" : "默认巡检点位");
+                points.save(point);
+                if (i >= existing.size()) existing.add(point);
+            }
+        }
+        return points.findAll().stream().sorted(Comparator.comparing(DroneBaseEntity::getId)).toList();
+    }
+
+    private static DronePathPlanner.Point pathPoint(DroneInspectionPoint point) {
+        return new DronePathPlanner.Point(point.getId(), point.getPointName(), point.getLongitude(), point.getLatitude(),
+                point.getAltitude() == null ? 1.5D : point.getAltitude(), point.getPointType(), point.getAreaName(), point.getRemark());
+    }
+
+    private static void validateCoordinates(Double longitude, Double latitude) {
+        if (longitude == null || latitude == null) throw new BusinessException("经纬度不能为空");
+        if (longitude < -180 || longitude > 180) throw new BusinessException("经度必须在-180到180之间");
+        if (latitude < -90 || latitude > 90) throw new BusinessException("纬度必须在-90到90之间");
+    }
+
     private static boolean contains(String value, String keyword) {
         return value != null && value.toLowerCase().contains(keyword.toLowerCase());
     }
@@ -355,18 +429,6 @@ public class DroneService implements ApplicationRunner {
             drone.setGreenhouseId(1L);
             devices.save(drone);
         }
-        if (points.count() == 0) {
-            for (int i = 1; i <= 5; i++) {
-                DroneInspectionPoint point = new DroneInspectionPoint();
-                point.setPointName("草莓垄巡检点" + i);
-                point.setGreenhouseId(1L);
-                point.setAreaName(i < 4 ? "A区" : "B区");
-                point.setX(i * 8D);
-                point.setY((i % 2 + 1) * 6D);
-                point.setZ(2.5D);
-                point.setPointType(i == 4 ? "DISEASE_PRONE" : "NORMAL");
-                points.save(point);
-            }
-        }
+        initDefaultPoints();
     }
 }

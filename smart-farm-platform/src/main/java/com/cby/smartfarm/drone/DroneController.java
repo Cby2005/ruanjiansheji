@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/drone")
 @RequiredArgsConstructor
@@ -70,20 +73,28 @@ public class DroneController {
         return Result.success();
     }
 
+    @PostMapping("/point/initDefault")
+    public Result<List<DroneInspectionPoint>> initDefaultPoints() {
+        return Result.success(service.initDefaultPoints());
+    }
+
     @PostMapping("/route/generate")
-    public Result<DroneRoutePlan> generateRoute(@Valid @RequestBody RouteGenerateRequest request) {
-        return Result.success(service.generateRoute(request));
+    public Result<Map<String, Object>> generateRoute(@Valid @RequestBody RouteGenerateRequest request) {
+        return Result.success(service.routeView(service.generateRoute(request)));
     }
 
     @GetMapping("/route/list")
-    public Result<Page<DroneRoutePlan>> routes(@RequestParam(defaultValue = "0") int page,
-                                               @RequestParam(defaultValue = "50") int size) {
-        return Result.success(service.listRoutes(page, size));
+    public Result<Page<Map<String, Object>>> routes(@RequestParam(required = false) String routeName,
+                                                     @RequestParam(required = false) String routeType,
+                                                     @RequestParam(required = false) String algorithmType,
+                                                     @RequestParam(defaultValue = "0") int page,
+                                                     @RequestParam(defaultValue = "50") int size) {
+        return Result.success(service.listRoutes(routeName, routeType, algorithmType, page, size).map(service::routeView));
     }
 
     @GetMapping("/route/{id}")
-    public Result<DroneRoutePlan> route(@PathVariable Long id) {
-        return Result.success(service.route(id));
+    public Result<Map<String, Object>> route(@PathVariable Long id) {
+        return Result.success(service.routeView(service.route(id)));
     }
 
     @DeleteMapping("/route/delete/{id}")

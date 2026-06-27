@@ -18,13 +18,14 @@ public class DroneRoutePlan extends DroneBaseEntity {
     private String routeName;
     private Long greenhouseId;
     private String routeType;
+    private String algorithmType;
     private String startPoint;
     private String endPoint;
     @Lob
     @Column(columnDefinition = "LONGTEXT")
     private String waypoints;
     private Double flightHeight;
-    private Double estimatedTime;
+    private Integer estimatedTime;
     private Double totalDistance;
     private String status = "READY";
 }

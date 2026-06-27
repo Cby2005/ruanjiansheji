@@ -40,7 +40,7 @@ const DroneManagement = {
                         <div style="display:flex; gap:10px; margin-bottom:14px;">
                             <el-input v-model="filters.areaName" placeholder="区域名称" clearable style="width:200px" @keyup.enter="loadPoints"></el-input>
                             <el-select v-model="filters.pointType" placeholder="全部类型" clearable style="width:150px" @change="loadPoints">
-                                <el-option label="普通点" value="NORMAL"></el-option><el-option label="重点点" value="KEY"></el-option>
+                                <el-option v-for="t in pointTypes" :key="t.value" :label="t.label" :value="t.value"></el-option>
                             </el-select>
                             <el-button :icon="Search" @click="loadPoints">查询</el-button>
                             <el-button v-if="canEdit" type="primary" :icon="Plus" @click="editPoint()">新增点位</el-button>
@@ -49,8 +49,8 @@ const DroneManagement = {
                             <el-table-column prop="pointName" label="点位名称" min-width="150"></el-table-column>
                             <el-table-column prop="areaName" label="温室区域" min-width="120"></el-table-column>
                             <el-table-column prop="greenhouseId" label="温室ID" width="90"></el-table-column>
-                            <el-table-column label="坐标 (m)" min-width="160"><template #default="{row}">X {{row.x}} / Y {{row.y}} / Z {{row.z}}</template></el-table-column>
-                            <el-table-column label="类型" width="100"><template #default="{row}"><el-tag :type="row.pointType === 'KEY' ? 'warning' : 'info'">{{row.pointType === 'KEY' ? '重点点' : '普通点'}}</el-tag></template></el-table-column>
+                            <el-table-column label="经纬度" min-width="200"><template #default="{row}">{{row.longitude}}, {{row.latitude}} / {{row.altitude}}m</template></el-table-column>
+                            <el-table-column label="类型" width="110"><template #default="{row}"><el-tag :type="pointTag(row.pointType)">{{pointTypeText(row.pointType)}}</el-tag></template></el-table-column>
                             <el-table-column prop="remark" label="备注" min-width="150"></el-table-column>
                             <el-table-column v-if="canEdit" label="操作" width="150" fixed="right"><template #default="{row}"><el-button link type="primary" @click="editPoint(row)">编辑</el-button><el-button link type="danger" @click="remove('point', row.id)">删除</el-button></template></el-table-column>
                         </el-table>
@@ -73,10 +73,43 @@ const DroneManagement = {
                         </div>
                         <el-table :data="routes" border stripe @row-click="previewRoute">
                             <el-table-column prop="routeCode" label="路径编号" min-width="130"></el-table-column><el-table-column prop="routeName" label="路径名称" min-width="140"></el-table-column>
-                            <el-table-column prop="routeType" label="类型" width="100"></el-table-column><el-table-column prop="totalDistance" label="距离(m)" width="100"></el-table-column><el-table-column prop="estimatedTime" label="预计(min)" width="110"></el-table-column>
+                            <el-table-column prop="routeType" label="类型" width="150"></el-table-column><el-table-column prop="totalDistance" label="距离(m)" width="100"></el-table-column><el-table-column prop="estimatedTime" label="预计(秒)" width="110"></el-table-column>
                             <el-table-column label="点位" min-width="180"><template #default="{row}">{{ waypointCount(row) }} 个巡检点</template></el-table-column>
                             <el-table-column v-if="canEdit" label="操作" width="90"><template #default="{row}"><el-button link type="danger" @click.stop="remove('route', row.id)">删除</el-button></template></el-table-column>
                         </el-table>
+                    </el-tab-pane>
+
+                    <el-tab-pane label="路径可视化" name="map">
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; padding:4px 0 14px;">
+                            <el-select v-model="mapForm.greenhouseId" style="width:150px"><el-option label="1号草莓温室" :value="1"></el-option></el-select>
+                            <el-select v-model="mapForm.routeType" style="width:170px"><el-option label="日常巡检" value="DAILY_INSPECTION"></el-option><el-option label="病害巡检" value="DISEASE_INSPECTION"></el-option><el-option label="异常复核" value="ABNORMAL_RECHECK"></el-option></el-select>
+                            <el-select v-model="mapForm.algorithmType" style="width:130px"><el-option label="按顺序" value="ORDER"></el-option><el-option label="最近邻" value="NEAREST"></el-option></el-select>
+                            <el-select v-model="mapForm.pointIds" multiple collapse-tags placeholder="选择航点" style="width:240px"><el-option v-for="p in mapPoints" :key="p.id" :label="p.pointName" :value="p.id"></el-option></el-select>
+                            <el-button :icon="Refresh" @click="loadMapPoints">加载巡检点</el-button>
+                            <el-button v-if="canEdit" @click="initMapPoints">初始化默认点位</el-button>
+                            <el-button type="primary" :icon="Position" :loading="saving" @click="generateMapRoute">生成路径</el-button>
+                            <el-button type="success" :icon="VideoPlay" :disabled="!mapRoute" @click="simulateFlight">模拟飞行</el-button>
+                            <el-button :icon="Delete" @click="clearMapRoute">清除路径</el-button>
+                            <span style="margin-left:auto; color:#64748b; font-size:13px;">中心：[{{mapCenter.latitude}}, {{mapCenter.longitude}}]</span>
+                        </div>
+                        <div style="display:flex; flex-wrap:wrap; gap:14px; align-items:start;">
+                            <div id="drone-route-map" style="height:650px; min-width:0; flex:1 1 720px; border:1px solid #d8e5dc; background:#edf5ef;"></div>
+                            <div style="border-left:3px solid #16a34a; padding:4px 0 0 16px; min-height:650px; flex:1 1 280px; max-width:360px;">
+                                <h3 style="margin:0 0 16px; font-size:16px; color:#1f2937;">路径信息</h3>
+                                <el-descriptions :column="1" border size="small">
+                                    <el-descriptions-item label="路径名称">{{mapRoute?.routeName || '-'}}</el-descriptions-item>
+                                    <el-descriptions-item label="巡检点数">{{mapWaypoints.length}}</el-descriptions-item>
+                                    <el-descriptions-item label="总距离">{{mapRoute ? mapRoute.totalDistance + ' m' : '-'}}</el-descriptions-item>
+                                    <el-descriptions-item label="预计耗时">{{mapRoute ? mapRoute.estimatedTime + ' 秒' : '-'}}</el-descriptions-item>
+                                    <el-descriptions-item label="无人机状态"><el-tag :type="mapStatus==='模拟飞行中'?'primary':'success'">{{mapStatus}}</el-tag></el-descriptions-item>
+                                </el-descriptions>
+                                <el-table :data="mapWaypoints" size="small" border style="margin-top:14px" max-height="420">
+                                    <el-table-column prop="orderIndex" label="#" width="44"></el-table-column>
+                                    <el-table-column prop="pointName" label="航点"></el-table-column>
+                                    <el-table-column label="类型" width="82"><template #default="{row}">{{pointTypeText(row.pointType)}}</template></el-table-column>
+                                </el-table>
+                            </div>
+                        </div>
                     </el-tab-pane>
 
                     <el-tab-pane label="巡检任务" name="tasks">
@@ -123,7 +156,7 @@ const DroneManagement = {
                 <template #footer><el-button @click="deviceDialog=false">取消</el-button><el-button type="primary" @click="saveDevice">保存</el-button></template>
             </el-dialog>
             <el-dialog v-model="pointDialog" :title="pointForm.id ? '编辑巡检点' : '新增巡检点'" width="540px">
-                <el-form :model="pointForm" label-width="90px"><el-form-item label="点位名称"><el-input v-model="pointForm.pointName"></el-input></el-form-item><el-form-item label="温室区域"><el-input v-model="pointForm.areaName"></el-input></el-form-item><el-form-item label="温室ID"><el-input-number v-model="pointForm.greenhouseId" :min="1"></el-input-number></el-form-item><el-form-item label="坐标 X/Y/Z"><div style="display:flex; gap:8px"><el-input-number v-model="pointForm.x" :controls="false" style="width:110px"></el-input-number><el-input-number v-model="pointForm.y" :controls="false" style="width:110px"></el-input-number><el-input-number v-model="pointForm.z" :controls="false" style="width:110px"></el-input-number></div></el-form-item><el-form-item label="类型"><el-radio-group v-model="pointForm.pointType"><el-radio-button label="NORMAL">普通点</el-radio-button><el-radio-button label="KEY">重点点</el-radio-button></el-radio-group></el-form-item><el-form-item label="备注"><el-input v-model="pointForm.remark"></el-input></el-form-item></el-form>
+                <el-form :model="pointForm" label-width="90px"><el-form-item label="点位名称"><el-input v-model="pointForm.pointName"></el-input></el-form-item><el-form-item label="温室区域"><el-input v-model="pointForm.areaName"></el-input></el-form-item><el-form-item label="温室ID"><el-input-number v-model="pointForm.greenhouseId" :min="1"></el-input-number></el-form-item><el-form-item label="经度/纬度"><div style="display:flex; gap:8px"><el-input-number v-model="pointForm.longitude" :precision="6" :controls="false" style="width:170px"></el-input-number><el-input-number v-model="pointForm.latitude" :precision="6" :controls="false" style="width:170px"></el-input-number></div></el-form-item><el-form-item label="飞行高度"><el-input-number v-model="pointForm.altitude" :precision="2" :min="0.5" :max="20"></el-input-number></el-form-item><el-form-item label="类型"><el-select v-model="pointForm.pointType" style="width:180px"><el-option v-for="t in pointTypes" :key="t.value" :label="t.label" :value="t.value"></el-option></el-select></el-form-item><el-form-item label="备注"><el-input v-model="pointForm.remark"></el-input></el-form-item></el-form>
                 <template #footer><el-button @click="pointDialog=false">取消</el-button><el-button type="primary" @click="savePoint">保存</el-button></template>
             </el-dialog>
         </div>
@@ -136,17 +169,22 @@ const DroneManagement = {
         const activeTab = Vue.ref(route.query.tab || 'devices');
         const devices = Vue.ref([]), points = Vue.ref([]), routes = Vue.ref([]), tasks = Vue.ref([]), images = Vue.ref([]), reports = Vue.ref([]);
         const deviceDialog = Vue.ref(false), pointDialog = Vue.ref(false), saving = Vue.ref(false), reportTaskId = Vue.ref(null);
+        const mapPoints = Vue.ref([]), mapRoute = Vue.ref(null), mapStatus = Vue.ref('待规划');
+        const mapCenter = Vue.reactive({ latitude:34.136323, longitude:113.809058 });
         const filters = Vue.reactive({ deviceKeyword:'', deviceStatus:'', areaName:'', pointType:'' });
         const blankDevice = () => ({ droneCode:'', droneName:'', model:'UAV-X1', batteryLevel:100, greenhouseId:1, status:'IDLE', cameraStatus:'NORMAL', currentX:0, currentY:0, currentZ:0, remark:'' });
-        const blankPoint = () => ({ pointName:'', greenhouseId:1, areaName:'A区', x:0, y:0, z:2, pointType:'NORMAL', remark:'' });
+        const blankPoint = () => ({ pointName:'', greenhouseId:1, areaName:'A区', x:0, y:0, z:1.5, longitude:113.809058, latitude:34.136323, altitude:1.5, pointType:'NORMAL', remark:'' });
         const deviceForm = Vue.reactive(blankDevice()), pointForm = Vue.reactive(blankPoint());
-        const routeForm = Vue.reactive({ routeName:'草莓温室日常巡检', greenhouseId:1, routeType:'DAILY', pointIds:[], algorithmType:'NEAREST', startX:0, startY:0, startZ:2, endX:0, endY:0, endZ:2 });
+        const routeForm = Vue.reactive({ routeName:'草莓温室日常巡检', greenhouseId:1, routeType:'DAILY_INSPECTION', pointIds:[], algorithmType:'NEAREST', startX:0, startY:0, startZ:2, endX:0, endY:0, endZ:2 });
+        const mapForm = Vue.reactive({ greenhouseId:1, routeName:'1号温室草莓日常巡检路线', routeType:'DAILY_INSPECTION', algorithmType:'NEAREST', pointIds:[] });
         const taskForm = Vue.reactive({ taskName:'草莓温室巡检任务', droneId:null, routeId:null, greenhouseId:1, taskType:'DAILY' });
         const imageForm = Vue.reactive({ taskId:null, imageUrl:'', capturePoint:'' });
         const selectedRoute = Vue.ref(null);
         const pageContent = (value) => value?.content || [];
         const canEdit = Vue.computed(() => (JSON.parse(localStorage.getItem('user') || '{}').role || 'VIEWER') !== 'VIEWER');
         const routeAlgorithms = [{ label:'按顺序', value:'ORDER' }, { label:'最近邻', value:'NEAREST' }];
+        const pointTypes = [{label:'起飞点',value:'START'},{label:'普通巡检点',value:'NORMAL'},{label:'异常复核点',value:'ABNORMAL'},{label:'返航点',value:'END'}];
+        let leafletMap, pointLayer, routeLayer, droneMarker, flightTimer;
         const run = async (action, success) => { try { saving.value=true; await action(); if(success) message.success(success); } catch(e) { message.error(e.message || '操作失败'); } finally { saving.value=false; } };
         const loadDevices = async () => devices.value = pageContent(await droneApi.devices({ keyword:filters.deviceKeyword || undefined, status:filters.deviceStatus || undefined }));
         const loadPoints = async () => points.value = pageContent(await droneApi.points({ areaName:filters.areaName || undefined, pointType:filters.pointType || undefined }));
@@ -156,13 +194,13 @@ const DroneManagement = {
         const loadReports = async () => reports.value = pageContent(await droneApi.reports());
         const loadAll = async () => { try { await Promise.all([loadDevices(),loadPoints(),loadRoutes(),loadTasks(),loadImages(),loadReports()]); } catch(e) { message.error(e.message || '无人机数据加载失败'); } };
         const changeTab = name => router.replace({ path:'/drones', query:{ tab:name } });
-        Vue.watch(() => route.query.tab, value => activeTab.value = value || 'devices');
+        Vue.watch(() => route.query.tab, async value => { activeTab.value = value || 'devices'; if(value === 'map') await loadMapPoints(); });
         const editDevice = row => { Object.assign(deviceForm, blankDevice(), row || {}); deviceDialog.value=true; };
         const editPoint = row => { Object.assign(pointForm, blankPoint(), row || {}); pointDialog.value=true; };
         const saveDevice = () => run(async () => { if(!deviceForm.droneCode || !deviceForm.droneName) throw new Error('请填写设备编号和名称'); await droneApi.saveDevice({...deviceForm}); deviceDialog.value=false; await loadDevices(); }, '设备已保存');
         const savePoint = () => run(async () => { if(!pointForm.pointName) throw new Error('请填写点位名称'); await droneApi.savePoint({...pointForm}); pointDialog.value=false; await loadPoints(); }, '点位已保存');
         const remove = async (type,id) => { try { await ElementPlus.ElMessageBox.confirm('确认删除这条记录？','删除确认',{type:'warning'}); await ({device:droneApi.deleteDevice,point:droneApi.deletePoint,route:droneApi.deleteRoute}[type])(id); await loadAll(); message.success('已删除'); } catch(e) { if(e !== 'cancel' && e !== 'close') message.error(e.message || '删除失败'); } };
-        const generateRoute = () => run(async () => { if(!routeForm.routeName || !routeForm.pointIds.length) throw new Error('请填写路径名称并选择巡检点'); selectedRoute.value = await droneApi.generateRoute({...routeForm}); await loadRoutes(); }, '路径已生成');
+        const generateRoute = () => run(async () => { if(!routeForm.routeName || routeForm.pointIds.length<2) throw new Error('请填写路径名称并至少选择2个巡检点'); selectedRoute.value = await droneApi.generateRoute({...routeForm}); await loadRoutes(); }, '路径已生成');
         const createTask = () => run(async () => { if(!taskForm.taskName || !taskForm.droneId || !taskForm.routeId) throw new Error('请填写任务并选择设备和路径'); await droneApi.createTask({...taskForm}); await loadTasks(); }, '任务已创建');
         const taskAction = (action,id) => run(async () => { await ({start:droneApi.startTask,finish:droneApi.finishTask,cancel:droneApi.cancelTask}[action])(id); await Promise.all([loadTasks(),loadDevices()]); }, '任务状态已更新');
         const addImage = () => run(async () => { if(!imageForm.taskId || !imageForm.imageUrl) throw new Error('请选择任务并填写影像 URL'); await droneApi.addImage({...imageForm}); imageForm.imageUrl=''; imageForm.capturePoint=''; await loadImages(); }, '影像已登记');
@@ -170,21 +208,86 @@ const DroneManagement = {
         const generateReport = () => run(async () => { if(!reportTaskId.value) throw new Error('请选择巡检任务'); await droneApi.generateReport(reportTaskId.value); await loadReports(); }, '报告已生成');
         const createFarmTask = id => run(() => droneApi.createFarmTask(id), '已生成农事处置任务');
         const previewRoute = row => selectedRoute.value=row;
-        const parsedWaypoints = row => { try { return JSON.parse(row?.waypoints || '[]'); } catch { return []; } };
+        const parsedWaypoints = row => { if(Array.isArray(row?.waypoints)) return row.waypoints; try { return JSON.parse(row?.waypoints || '[]'); } catch { return []; } };
         const waypointCount = row => parsedWaypoints(row).length;
         const routePreview = Vue.computed(() => {
             if(!selectedRoute.value) return [];
-            const parse = value => { try { return JSON.parse(value || '{}'); } catch { return {}; } };
-            const start=parse(selectedRoute.value.startPoint), end=parse(selectedRoute.value.endPoint);
-            const raw=[{...start,name:'起点'},...parsedWaypoints(selectedRoute.value).map(p=>({...p,name:p.pointName})),{...end,name:'终点'}];
-            const xs=raw.map(p=>Number(p.x)||0), ys=raw.map(p=>Number(p.y)||0), minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
-            return raw.map(p=>({...p,sx:30+((Number(p.x)||0)-minX)/(maxX-minX||1)*500,sy:210-((Number(p.y)||0)-minY)/(maxY-minY||1)*180}));
+            const raw=parsedWaypoints(selectedRoute.value).map(p=>({...p,name:p.pointName}));
+            const xs=raw.map(p=>Number(p.longitude ?? p.x)||0), ys=raw.map(p=>Number(p.latitude ?? p.y)||0), minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+            return raw.map(p=>({...p,sx:30+((Number(p.longitude ?? p.x)||0)-minX)/(maxX-minX||1)*500,sy:210-((Number(p.latitude ?? p.y)||0)-minY)/(maxY-minY||1)*180}));
         });
         const routePolyline = Vue.computed(() => routePreview.value.map(p=>p.sx+','+p.sy).join(' '));
+        const mapWaypoints = Vue.computed(() => parsedWaypoints(mapRoute.value));
+        const escapeHtml = value => String(value ?? '-').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+        const initLeafletMap = async () => {
+            await Vue.nextTick();
+            const element=document.getElementById('drone-route-map');
+            if(!element) return;
+            if(typeof L === 'undefined') throw new Error('Leaflet 地图资源加载失败');
+            if(leafletMap){ leafletMap.invalidateSize(); return; }
+            leafletMap=L.map(element).setView([34.136323,113.809058],19);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:21,attribution:'&copy; OpenStreetMap'}).addTo(leafletMap);
+            L.polygon([[34.136250,113.808950],[34.136560,113.808950],[34.136560,113.809430],[34.136250,113.809430]],{color:'#16a34a',weight:2,fillColor:'#86efac',fillOpacity:0.22}).bindPopup('1号温室草莓种植区').addTo(leafletMap);
+            pointLayer=L.layerGroup().addTo(leafletMap);
+            leafletMap.on('moveend',()=>{const c=leafletMap.getCenter();mapCenter.latitude=c.lat.toFixed(6);mapCenter.longitude=c.lng.toFixed(6);});
+        };
+        const renderMapPoints = () => {
+            if(!leafletMap || !pointLayer) return;
+            pointLayer.clearLayers();
+            const colors={START:'#16a34a',NORMAL:'#2563eb',ABNORMAL:'#dc2626',END:'#6b7280'};
+            mapPoints.value.filter(p=>p.latitude!=null&&p.longitude!=null).forEach(p=>{
+                const marker=L.circleMarker([p.latitude,p.longitude],{radius:p.pointType==='START'?9:7,color:'#fff',weight:2,fillColor:colors[p.pointType]||'#2563eb',fillOpacity:1});
+                marker.bindPopup(`<b>${escapeHtml(p.pointName)}</b><br>类型：${escapeHtml(pointTypeText(p.pointType))}<br>区域：${escapeHtml(p.areaName)}<br>经度：${p.longitude}<br>纬度：${p.latitude}<br>高度：${p.altitude ?? 1.5} m<br>备注：${escapeHtml(p.remark)}`);
+                marker.addTo(pointLayer);
+            });
+        };
+        const loadMapPoints = async () => {
+            try {
+                await initLeafletMap();
+                mapPoints.value=pageContent(await droneApi.points({greenhouseId:mapForm.greenhouseId,size:100})).sort((a,b)=>a.id-b.id);
+                mapForm.pointIds=mapPoints.value.filter(p=>p.latitude!=null&&p.longitude!=null).map(p=>p.id);
+                renderMapPoints();
+                if(!mapForm.pointIds.length) message.warning('暂无经纬度点位，请初始化默认点位');
+            } catch(e) { message.error(e.message || '地图点位加载失败'); }
+        };
+        const initMapPoints = () => run(async()=>{await droneApi.initPoints();await Promise.all([loadPoints(),loadMapPoints()]);},'默认点位已初始化');
+        const drawMapRoute = async () => {
+            await initLeafletMap();
+            const latLngs=mapWaypoints.value.map(p=>[p.latitude,p.longitude]);
+            if(latLngs.length<2) return;
+            if(routeLayer) leafletMap.removeLayer(routeLayer);
+            if(droneMarker) leafletMap.removeLayer(droneMarker);
+            routeLayer=L.polyline(latLngs,{color:'#2563eb',weight:5,opacity:0.9}).addTo(leafletMap);
+            droneMarker=L.marker(latLngs[0],{icon:L.divIcon({className:'',html:'<div style="width:32px;height:32px;border-radius:50%;background:#fff;color:#16a34a;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px #475569"><i class="fas fa-helicopter"></i></div>',iconSize:[32,32],iconAnchor:[16,16]})}).bindTooltip('巡检无人机').addTo(leafletMap);
+            leafletMap.fitBounds(routeLayer.getBounds(),{padding:[35,35]});
+            mapStatus.value='路径已生成';
+        };
+        const generateMapRoute = () => run(async()=>{
+            if(mapForm.pointIds.length<2) throw new Error('至少需要2个巡检点');
+            mapRoute.value=await droneApi.generateRoute({...mapForm});
+            await drawMapRoute();
+            await loadRoutes();
+        },'真实经纬度路径已生成');
+        const clearMapRoute = () => {
+            if(flightTimer) clearInterval(flightTimer);
+            if(leafletMap&&routeLayer) leafletMap.removeLayer(routeLayer);
+            if(leafletMap&&droneMarker) leafletMap.removeLayer(droneMarker);
+            flightTimer=routeLayer=droneMarker=null; mapRoute.value=null; mapStatus.value='待规划';
+        };
+        const simulateFlight = () => {
+            const points=mapWaypoints.value.map(p=>[p.latitude,p.longitude]);
+            if(!droneMarker||points.length<2) return message.warning('请先生成路径');
+            if(flightTimer) clearInterval(flightTimer);
+            let index=0; droneMarker.setLatLng(points[0]); mapStatus.value='模拟飞行中';
+            flightTimer=setInterval(()=>{index++;if(index>=points.length){clearInterval(flightTimer);flightTimer=null;mapStatus.value='模拟完成';message.success('巡检任务模拟完成');return;}droneMarker.setLatLng(points[index]);leafletMap.panTo(points[index]);},1000);
+        };
+        const pointTypeText = type => ({START:'起飞点',NORMAL:'巡检点',ABNORMAL:'异常复核',END:'返航点',KEY:'重点点',DISEASE_PRONE:'易病点'}[type]||type||'-');
+        const pointTag = type => ({START:'success',NORMAL:'primary',ABNORMAL:'danger',END:'info'}[type]||'warning');
         const statusText = s => ({IDLE:'空闲',RUNNING:'运行中',FAULT:'故障',MAINTENANCE:'维护中',PENDING:'待执行',FINISHED:'已完成',CANCELLED:'已取消'}[s] || s || '-');
         const tagType = s => ({IDLE:'success',RUNNING:'primary',FAULT:'danger',MAINTENANCE:'warning',PENDING:'info',FINISHED:'success',CANCELLED:'info'}[s] || 'info');
-        Vue.onMounted(loadAll);
-        return { activeTab,devices,points,routes,tasks,images,reports,filters,deviceDialog,pointDialog,deviceForm,pointForm,routeForm,taskForm,imageForm,reportTaskId,saving,canEdit,routeAlgorithms,routePreview,routePolyline,loadAll,loadDevices,loadPoints,changeTab,editDevice,editPoint,saveDevice,savePoint,remove,generateRoute,createTask,taskAction,addImage,detectImage,generateReport,createFarmTask,previewRoute,waypointCount,statusText,tagType,Math,
-            Refresh:ElementPlusIconsVue.Refresh, Search:ElementPlusIconsVue.Search, Plus:ElementPlusIconsVue.Plus, Position:ElementPlusIconsVue.Position, Upload:ElementPlusIconsVue.Upload, Document:ElementPlusIconsVue.Document };
+        Vue.onMounted(async()=>{await loadAll();if(activeTab.value==='map')await loadMapPoints();});
+        Vue.onBeforeUnmount(()=>{if(flightTimer)clearInterval(flightTimer);if(leafletMap)leafletMap.remove();});
+        return { activeTab,devices,points,routes,tasks,images,reports,mapPoints,filters,deviceDialog,pointDialog,deviceForm,pointForm,routeForm,taskForm,imageForm,reportTaskId,saving,canEdit,routeAlgorithms,pointTypes,routePreview,routePolyline,mapForm,mapRoute,mapWaypoints,mapStatus,mapCenter,loadAll,loadDevices,loadPoints,loadMapPoints,initMapPoints,generateMapRoute,simulateFlight,clearMapRoute,changeTab,editDevice,editPoint,saveDevice,savePoint,remove,generateRoute,createTask,taskAction,addImage,detectImage,generateReport,createFarmTask,previewRoute,waypointCount,pointTypeText,pointTag,statusText,tagType,Math,
+            Refresh:ElementPlusIconsVue.Refresh, Search:ElementPlusIconsVue.Search, Plus:ElementPlusIconsVue.Plus, Position:ElementPlusIconsVue.Position, Upload:ElementPlusIconsVue.Upload, Document:ElementPlusIconsVue.Document, VideoPlay:ElementPlusIconsVue.VideoPlay, Delete:ElementPlusIconsVue.Delete };
     }
 };

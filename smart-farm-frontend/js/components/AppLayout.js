@@ -60,6 +60,7 @@ const AppLayout = {
                                     <el-menu-item index="/drones?tab=devices">无人机设备</el-menu-item>
                                     <el-menu-item index="/drones?tab=points">巡检点位</el-menu-item>
                                     <el-menu-item index="/drones?tab=routes">路径规划</el-menu-item>
+                                    <el-menu-item index="/drones?tab=map">路径可视化</el-menu-item>
                                     <el-menu-item index="/drones?tab=tasks">巡检任务</el-menu-item>
                                     <el-menu-item index="/drones?tab=images">巡检影像</el-menu-item>
                                     <el-menu-item index="/drones?tab=reports">巡检报告</el-menu-item>
@@ -187,7 +188,7 @@ const AppLayout = {
 
         const currentPageTitle = Vue.computed(() => {
             if (route.path === '/drones') {
-                const names = { devices: '无人机设备', points: '巡检点位', routes: '路径规划', tasks: '巡检任务', images: '巡检影像', reports: '巡检报告' };
+                const names = { devices: '无人机设备', points: '巡检点位', routes: '路径规划', map: '无人机巡检路径可视化', tasks: '巡检任务', images: '巡检影像', reports: '巡检报告' };
                 return names[route.query.tab] || '无人机巡检';
             }
             const item = menuItems.find(m => m.path === route.path);

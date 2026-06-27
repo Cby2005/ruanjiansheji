@@ -21,6 +21,12 @@ public class DroneInspectionPoint extends DroneBaseEntity {
     private Double y;
     @Column(nullable = false)
     private Double z;
+    @Column(columnDefinition = "DECIMAL(12,6)")
+    private Double longitude;
+    @Column(columnDefinition = "DECIMAL(12,6)")
+    private Double latitude;
+    @Column(columnDefinition = "DECIMAL(8,2)")
+    private Double altitude = 1.5D;
     private String pointType = "NORMAL";
     private String remark;
 }

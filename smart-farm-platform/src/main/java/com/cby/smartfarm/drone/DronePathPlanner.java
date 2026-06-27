@@ -7,8 +7,9 @@ import java.util.List;
 public final class DronePathPlanner {
     private DronePathPlanner() {}
 
-    public record Point(Long id, String name, double x, double y, double z) {}
-    public record Plan(List<Point> points, double distanceMeters, double minutes) {}
+    public record Point(Long id, String name, double longitude, double latitude, double altitude,
+                        String pointType, String areaName, String remark) {}
+    public record Plan(List<Point> points, double distanceMeters, int estimatedSeconds) {}
 
     public static Plan plan(Point start, Point end, List<Point> inspectionPoints, String algorithm) {
         List<Point> ordered = "NEAREST".equalsIgnoreCase(algorithm)
@@ -22,7 +23,7 @@ public final class DronePathPlanner {
         for (int i = 1; i < route.size(); i++) {
             distance += distance(route.get(i - 1), route.get(i));
         }
-        return new Plan(route, round(distance), round(distance / 1.5 / 60));
+        return new Plan(route, round(distance), (int) Math.ceil(distance / 1.5));
     }
 
     private static List<Point> nearest(Point start, List<Point> points) {
@@ -42,7 +43,7 @@ public final class DronePathPlanner {
     }
 
     static double distance(Point a, Point b) {
-        return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2) + Math.pow(a.z - b.z, 2));
+        return GeoDistance.haversine(a.latitude, a.longitude, b.latitude, b.longitude);
     }
 
     private static double round(double value) {
