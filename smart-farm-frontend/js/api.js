@@ -727,6 +727,29 @@ const agentDecisionApi = {
     decision: (data) => api.post('/api/agent/decision', data)
 };
 
+const droneApi = {
+    devices: (params) => api.get('/api/drone/device/list', { params }),
+    saveDevice: (data) => data.id ? api.put('/api/drone/device/update', data) : api.post('/api/drone/device/add', data),
+    deleteDevice: (id) => api.delete('/api/drone/device/delete/' + id),
+    points: (params) => api.get('/api/drone/point/list', { params }),
+    savePoint: (data) => data.id ? api.put('/api/drone/point/update', data) : api.post('/api/drone/point/add', data),
+    deletePoint: (id) => api.delete('/api/drone/point/delete/' + id),
+    routes: () => api.get('/api/drone/route/list'),
+    generateRoute: (data) => api.post('/api/drone/route/generate', data),
+    deleteRoute: (id) => api.delete('/api/drone/route/delete/' + id),
+    tasks: (params) => api.get('/api/drone/task/list', { params }),
+    createTask: (data) => api.post('/api/drone/task/create', data),
+    startTask: (id) => api.post('/api/drone/task/start/' + id),
+    finishTask: (id) => api.post('/api/drone/task/finish/' + id, null, { params: { result: '巡检完成' } }),
+    cancelTask: (id) => api.post('/api/drone/task/cancel/' + id),
+    images: (params) => api.get('/api/drone/image/list', { params }),
+    addImage: (data) => api.post('/api/drone/image/add', data),
+    detectImage: (id) => api.post('/api/drone/image/detect/' + id),
+    reports: () => api.get('/api/drone/report/list'),
+    generateReport: (taskId) => api.post('/api/drone/report/generate/' + taskId),
+    createFarmTask: (taskId) => api.post('/api/drone/task/farm-task/' + taskId)
+};
+
 window.deviceApi = deviceApi;
 window.environmentApi = environmentApi;
 window.statisticsApi = statisticsApi;
@@ -736,6 +759,7 @@ window.strategyApi = strategyApi;
 window.sensorApi = sensorApi;
 window.ragApi = ragApi;
 window.agentDecisionApi = agentDecisionApi;
+window.droneApi = droneApi;
 
 // 导出 Mock 存储，供调试使用
 window.mockStore = mockStore;

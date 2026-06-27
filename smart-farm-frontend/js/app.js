@@ -59,6 +59,7 @@ const routes = [
     { path: '/project-division', component: ProjectDivision, meta: { requiresAuth: true } },                          // 所有角色
     { path: '/profile', component: UserProfile, meta: { requiresAuth: true } },                                       // 所有角色
     { path: '/tasks', component: TaskManagement, meta: { requiresAuth: true } },                                      // 所有角色（操作权限在页面内控制）
+    { path: '/drones', component: DroneManagement, meta: { requiresAuth: true } },                                   // 温室无人机巡检
     { path: '/alerts', component: AlertCenter, meta: { requiresAuth: true } },                                        // 所有角色（操作权限在页面内控制）
     { path: '/yield-prediction', component: YieldPrediction, meta: { requiresAuth: true, requiredRole: 'TECHNICIAN' } } // 技术员及以上
 ];
@@ -108,6 +109,7 @@ app.component('agri-knowledge-hub', AgriKnowledgeHub);
 app.component('project-division', ProjectDivision);
 app.component('user-profile', UserProfile);
 app.component('task-management', TaskManagement);
+app.component('drone-management', DroneManagement);
 app.component('alert-center', AlertCenter);
 
 // 全局提供认证状态

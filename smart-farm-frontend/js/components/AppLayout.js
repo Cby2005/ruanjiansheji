@@ -52,6 +52,18 @@ const AppLayout = {
                                     <i class="fas fa-tasks" style="margin-right: 10px; width: 20px; text-align: center;"></i>
                                     <template #title>农事任务管理</template>
                                 </el-menu-item>
+                                <el-sub-menu index="drone">
+                                    <template #title>
+                                        <i class="fas fa-helicopter" style="margin-right: 10px; width: 20px; text-align: center;"></i>
+                                        <span>无人机巡检</span>
+                                    </template>
+                                    <el-menu-item index="/drones?tab=devices">无人机设备</el-menu-item>
+                                    <el-menu-item index="/drones?tab=points">巡检点位</el-menu-item>
+                                    <el-menu-item index="/drones?tab=routes">路径规划</el-menu-item>
+                                    <el-menu-item index="/drones?tab=tasks">巡检任务</el-menu-item>
+                                    <el-menu-item index="/drones?tab=images">巡检影像</el-menu-item>
+                                    <el-menu-item index="/drones?tab=reports">巡检报告</el-menu-item>
+                                </el-sub-menu>
                                 <el-menu-item index="/alerts">
                                     <i class="fas fa-exclamation-triangle" style="margin-right: 10px; width: 20px; text-align: center;"></i>
                                     <template #title>预警中心</template>
@@ -162,6 +174,7 @@ const AppLayout = {
             { path: '/project-division', name: '分工功能看板' },
             { path: '/devices', name: '智能设备控制' },
             { path: '/tasks', name: '农事任务管理' },
+            { path: '/drones', name: '无人机巡检' },
             { path: '/alerts', name: '预警中心' },
             { path: '/statistics', name: '统计分析' },
             { path: '/yield-prediction', name: '产量预测' },
@@ -169,10 +182,14 @@ const AppLayout = {
         ];
 
         const activeMenu = Vue.computed(() => {
-            return route.path;
+            return route.path === '/drones' ? route.fullPath : route.path;
         });
 
         const currentPageTitle = Vue.computed(() => {
+            if (route.path === '/drones') {
+                const names = { devices: '无人机设备', points: '巡检点位', routes: '路径规划', tasks: '巡检任务', images: '巡检影像', reports: '巡检报告' };
+                return names[route.query.tab] || '无人机巡检';
+            }
             const item = menuItems.find(m => m.path === route.path);
             return item ? item.name : '首页大屏';
         });
